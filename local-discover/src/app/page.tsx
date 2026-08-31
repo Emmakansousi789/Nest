@@ -589,7 +589,7 @@ function DiscoverPage() {
                       {mapExpanded ? "Hide map" : "Show map"}
                     </button>
                     <div
-                      className={`w-full overflow-hidden border border-parchment transition-all duration-300 ${
+                      className={`w-full overflow-hidden rounded-2xl border border-parchment shadow-sm transition-all duration-300 ${
                         mapExpanded
                           ? "h-[300px] sm:h-[400px]"
                           : "h-0 border-0"

@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import Image from "next/image";
 import { LoadingSpinner } from "./icons";
+import CategoryIllustration, { getGradient } from "./CategoryIllustration";
+import { BusinessCategory } from "@/types";
 
 interface Photo {
   url: string;
@@ -22,17 +25,6 @@ export default function PhotoCarousel({ photos, category, vendorName }: PhotoCar
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Use category-based placeholder if no real photos
-  const placeholderColors: Record<string, { bg: string; emoji: string }> = {
-    "farmers-market": { bg: "bg-[#E8F0EB]", emoji: "🌱" },
-    "food-producer": { bg: "bg-[#FEF3C7]", emoji: "🍳" },
-    maker: { bg: "bg-[#EDE9FE]", emoji: "🎨" },
-    retail: { bg: "bg-[#FCE7F3]", emoji: "🛍️" },
-    services: { bg: "bg-[#F1F5F9]", emoji: "🔧" },
-    artisan: { bg: "bg-[#ECFDF5]", emoji: "✨" },
-    wellness: { bg: "bg-[#F0FDF4]", emoji: "🧘" },
-  };
-
   const displayPhotos = photos.length > 0
     ? photos
     : Array.from({ length: 3 }, (_, i) => ({
@@ -40,7 +32,8 @@ export default function PhotoCarousel({ photos, category, vendorName }: PhotoCar
         alt: `${vendorName || "Business"} photo ${i + 1}`,
       }));
 
-  const placeholder = category ? placeholderColors[category] || placeholderColors.services : placeholderColors.services;
+  const resolvedCategory = (category as BusinessCategory) || "services";
+  const placeholderBg = getGradient(resolvedCategory);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     setTouchStart(e.touches[0].clientX);
@@ -69,7 +62,6 @@ export default function PhotoCarousel({ photos, category, vendorName }: PhotoCar
 
   return (
     <div className="relative w-full overflow-hidden" ref={containerRef}>
-      {/* Photo viewport */}
       <div
         className="relative aspect-[16/10] overflow-hidden touch-pan-y"
         onTouchStart={handleTouchStart}
@@ -86,31 +78,26 @@ export default function PhotoCarousel({ photos, category, vendorName }: PhotoCar
           {displayPhotos.map((photo, i) => (
             <div
               key={i}
-              className={`relative w-full h-full flex-shrink-0 ${placeholder.bg} flex items-center justify-center`}
+              className={`relative w-full h-full flex-shrink-0 ${placeholderBg} flex items-center justify-center`}
             >
               {photo.url ? (
-                <img
+                <Image
                   src={photo.url}
                   alt={photo.alt}
-                  className="w-full h-full object-cover"
-                  loading={i === 0 ? "eager" : "lazy"}
+                  fill
+                  sizes="(max-width: 640px) 100vw, 600px"
+                  className="object-cover"
+                  priority={i === 0}
                 />
               ) : (
                 <div className="flex flex-col items-center gap-2 text-center px-8">
-                  <span className="text-5xl opacity-40">{placeholder.emoji}</span>
+                  <CategoryIllustration category={resolvedCategory} size={72} />
                   <span className="text-xs text-stone/60 font-medium">{photo.alt}</span>
                 </div>
               )}
             </div>
           ))}
         </div>
-
-        {/* Photo count pill */}
-        {displayPhotos.length > 1 && (
-          <div className="absolute bottom-3 right-3 bg-charcoal/70 backdrop-blur-sm text-white text-[11px] font-medium px-2.5 py-1 rounded-full">
-            {currentIndex + 1} / {displayPhotos.length}
-          </div>
-        )}
       </div>
 
       {/* Dot indicators */}

@@ -23,12 +23,16 @@ export const metadata: Metadata = {
   description:
     "Discover independent businesses, local makers, and community vendors in your city. A free directory for the businesses that make neighborhoods unique.",
   manifest: "/manifest.json",
+  metadataBase: new URL("https://localdiscover.app"),
   openGraph: {
     title: "Local Discover — Find Small Businesses Near You",
     description:
       "Discover independent businesses, local makers, and community vendors in your city.",
     type: "website",
     locale: "en_US",
+    images: [
+      { url: "/opengraph-image.png", width: 1200, height: 630, alt: "Local Discover" },
+    ],
   },
 };
 

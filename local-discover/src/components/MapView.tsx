@@ -30,10 +30,12 @@ export default function MapView({
 
   if (!mounted || !MapComponent) {
     return (
-      <div className="w-full h-full rounded-2xl overflow-hidden bg-gradient-to-br from-primary-light via-emerald-100 to-emerald-200 flex items-center justify-center">
+      <div className="w-full h-full rounded-2xl overflow-hidden bg-ecru flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl mb-2">🗺️</div>
-          <p className="text-sm font-medium text-terracotta-dark/60">Loading map…</p>
+          <svg className="w-8 h-8 mx-auto mb-2 text-stone" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75L3 9v11.25l6-2.25m0-11.25l6 2.25m-6-2.25v11.25m6-9L21 6v11.25l-6 2.25m0-11.25l-6 2.25m6 9V9" />
+          </svg>
+          <p className="text-sm font-medium text-stone">Loading map…</p>
         </div>
       </div>
     );

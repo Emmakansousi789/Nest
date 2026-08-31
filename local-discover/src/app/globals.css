@@ -130,8 +130,10 @@ a {
   box-shadow: none !important;
 }
 
-.leaflet-tile-pane {
-  filter: saturate(0.3) contrast(1.05) brightness(1.02);
+/* CartoDB Positron tiles are already clean/warm — no filter needed */
+
+.leaflet-container {
+  border-radius: 16px;
 }
 
 /* ===== BADGE STYLES ===== */

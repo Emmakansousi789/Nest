@@ -21,7 +21,9 @@ export default function BusinessListingEditor() {
   if (!vendor) {
     return (
       <div className="text-center py-12">
-        <div className="text-4xl mb-3">🏪</div>
+        <svg className="w-12 h-12 mx-auto mb-3 text-terracotta" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9.75l1.5-4.5h15l1.5 4.5M3 9.75v9a1.5 1.5 0 001.5 1.5h15a1.5 1.5 0 001.5-1.5v-9M3 9.75h18M8.25 21v-6a1.5 1.5 0 011.5-1.5h4.5a1.5 1.5 0 011.5 1.5v6" />
+        </svg>
         <h3 className="text-lg font-semibold text-charcoal mb-2">No listing yet</h3>
         <p className="text-sm text-stone max-w-sm mx-auto">
           Complete the onboarding to create your business listing.
@@ -61,28 +63,28 @@ export default function BusinessListingEditor() {
           <label className="text-xs font-semibold text-stone uppercase tracking-wider mb-1.5 block">Business Name</label>
           <input
             type="text" value={vendor.name} onChange={(e) => update("name", e.target.value)}
-            className="w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full px-4 py-2.5 input-field"
           />
         </div>
         <div>
           <label className="text-xs font-semibold text-stone uppercase tracking-wider mb-1.5 block">Tagline</label>
           <input
             type="text" value={vendor.tagline} onChange={(e) => update("tagline", e.target.value)}
-            className="w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full px-4 py-2.5 input-field"
           />
         </div>
         <div>
           <label className="text-xs font-semibold text-stone uppercase tracking-wider mb-1.5 block">Story</label>
           <textarea
             value={vendor.story} onChange={(e) => update("story", e.target.value)} rows={4}
-            className="w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+            className="w-full px-4 py-2.5 input-field resize-none"
           />
         </div>
         <div>
           <label className="text-xs font-semibold text-stone uppercase tracking-wider mb-1.5 block">Category</label>
           <select
             value={vendor.category} onChange={(e) => update("category", e.target.value)}
-            className="w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full px-4 py-2.5 input-field"
           >
             {categories.map((c) => (
               <option key={c.value} value={c.value}>{c.icon} {c.label}</option>
@@ -103,7 +105,7 @@ export default function BusinessListingEditor() {
                   update("tags", tags);
                 }}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  vendor.tags.includes(tag.value) ? "bg-terracotta text-white" : "bg-gray-100 text-stone hover:bg-gray-200"
+                  vendor.tags.includes(tag.value) ? "bg-terracotta text-white" : "bg-ecru text-stone hover:bg-parchment"
                 }`}
               >
                 {tag.label}
@@ -120,33 +122,33 @@ export default function BusinessListingEditor() {
           <div>
             <label className="text-xs font-semibold text-stone uppercase tracking-wider mb-1.5 block">Address</label>
             <input type="text" value={vendor.address} onChange={(e) => update("address", e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              className="w-full px-4 py-2.5 input-field" />
           </div>
           <div>
             <label className="text-xs font-semibold text-stone uppercase tracking-wider mb-1.5 block">City</label>
             <input type="text" value={vendor.city} onChange={(e) => update("city", e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              className="w-full px-4 py-2.5 input-field" />
           </div>
           <div>
             <label className="text-xs font-semibold text-stone uppercase tracking-wider mb-1.5 block">Phone</label>
             <input type="tel" value={vendor.phone} onChange={(e) => update("phone", e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              className="w-full px-4 py-2.5 input-field" />
           </div>
           <div>
             <label className="text-xs font-semibold text-stone uppercase tracking-wider mb-1.5 block">Email</label>
             <input type="email" value={vendor.email} onChange={(e) => update("email", e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              className="w-full px-4 py-2.5 input-field" />
           </div>
           <div>
             <label className="text-xs font-semibold text-stone uppercase tracking-wider mb-1.5 block">Website</label>
             <input type="url" value={vendor.website || ""} onChange={(e) => update("website", e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              className="w-full px-4 py-2.5 input-field" />
           </div>
           <div>
             <label className="text-xs font-semibold text-stone uppercase tracking-wider mb-1.5 block">Instagram</label>
             <input type="text" value={vendor.instagram || ""} onChange={(e) => update("instagram", e.target.value)}
               placeholder="@username"
-              className="w-full px-4 py-2.5 bg-gray-100 rounded-xl text-sm text-charcoal focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              className="w-full px-4 py-2.5 input-field" />
           </div>
         </div>
       </section>
@@ -233,14 +235,14 @@ export default function BusinessListingEditor() {
                     products[idx] = { ...products[idx], price: e.target.value };
                     update("products", products);
                   }}
-                  className="w-24 px-3 py-1.5 bg-white rounded-lg text-xs text-charcoal border border-gray-200 focus:outline-none" />
+                  className="w-24 px-3 py-1.5 input-field text-xs" />
                 <input type="text" value={product.category} placeholder="Category"
                   onChange={(e) => {
                     const products = [...vendor.products];
                     products[idx] = { ...products[idx], category: e.target.value };
                     update("products", products);
                   }}
-                  className="flex-1 px-3 py-1.5 bg-white rounded-lg text-xs text-charcoal border border-gray-200 focus:outline-none" />
+                  className="flex-1 px-3 py-1.5 input-field text-xs" />
               </div>
             </div>
             <button

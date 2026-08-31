@@ -17,7 +17,7 @@ const illustrations: Record<BusinessCategory, (size: number) => React.JSX.Elemen
   ),
   "food-producer": (size) => (
     <svg width={size} height={size} viewBox="0 0 120 120" fill="none">
-      <circle cx="60" cy="60" r="56" fill="#FEF3C7" />
+      <circle cx="60" cy="60" r="56" fill="#F3F0EA" />
       <ellipse cx="60" cy="68" rx="30" ry="18" fill="#C84B31" opacity="0.15" />
       <path d="M40 65 Q45 50 60 48 Q75 50 80 65" stroke="#C84B31" strokeWidth="2.5" fill="none" strokeLinecap="round" />
       <path d="M42 68 L78 68" stroke="#C84B31" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
@@ -79,7 +79,7 @@ const illustrations: Record<BusinessCategory, (size: number) => React.JSX.Elemen
 
 const categoryBgs: Record<BusinessCategory, string> = {
   "farmers-market": "bg-sage-light",
-  "food-producer": "bg-[#FEF3C7]",
+  "food-producer": "bg-ecru",
   maker: "bg-[#F3F0EA]",
   retail: "bg-[#F3F0EA]",
   services: "bg-[#F3F0EA]",
