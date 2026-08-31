@@ -53,12 +53,18 @@ export default function FilterSheet({
   return (
     <div className="fixed inset-0 z-50 sheet-backdrop flex items-end sm:items-center justify-center" onClick={onClose}>
       <div
-        className="bg-cream w-full max-w-lg sm:mx-4 max-h-[85vh] overflow-y-auto border border-parchment"
+        className="bg-cream w-full max-w-lg sm:mx-4 max-h-[85vh] overflow-y-auto border border-parchment rounded-t-2xl sm:rounded-2xl shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="sticky top-0 bg-cream border-b border-parchment px-6 py-4 flex items-center justify-between">
+        {/* Header */}
+        <div className="sticky top-0 bg-cream border-b border-parchment px-6 py-4 flex items-center justify-between rounded-t-2xl sm:rounded-t-2xl">
           <h3 className="font-serif text-lg font-semibold text-charcoal">Filters</h3>
-          <button onClick={onClose} className="text-clay hover:text-charcoal text-xl">×</button>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full text-clay hover:text-charcoal hover:bg-ecru transition-all duration-200 pressable focus-ring"
+          >
+            ×
+          </button>
         </div>
 
         <div className="p-6 space-y-6">
@@ -75,10 +81,10 @@ export default function FilterSheet({
                 onLocationQueryChange(e.target.value);
               }}
               placeholder="Search city or state..."
-              className="w-full border-b border-charcoal/20 focus:border-charcoal bg-transparent py-2 text-sm text-charcoal outline-none transition-colors"
+              className="input-field"
             />
             {locResults.length > 0 && (
-              <div className="mt-2 border border-parchment">
+              <div className="mt-2 border border-parchment rounded-xl overflow-hidden">
                 {locResults.map((loc) => (
                   <button
                     key={`${loc.name}-${loc.state}`}
@@ -86,7 +92,7 @@ export default function FilterSheet({
                       onLocationSelect(loc);
                       setLocQuery(`${loc.name}, ${loc.state}`);
                     }}
-                    className="w-full text-left px-4 py-2 hover:bg-ecru transition-colors text-sm flex items-center gap-2 border-b border-parchment last:border-0"
+                    className="w-full text-left px-4 py-2.5 hover:bg-ecru active:bg-parchment transition-colors text-sm flex items-center gap-2 border-b border-parchment last:border-0 pressable"
                   >
                     <span className="text-stone text-xs">→</span>
                     <span className="font-medium text-charcoal">{loc.name}</span>
@@ -95,17 +101,19 @@ export default function FilterSheet({
                 ))}
               </div>
             )}
+
+            {/* Radius */}
             {selectedLocation && (
-              <div className="mt-3">
+              <div className="mt-4">
                 <label className="text-[10px] font-semibold uppercase tracking-widest text-stone mb-2 block">
                   Radius
                 </label>
-                <div className="flex gap-0 border border-parchment">
+                <div className="flex gap-0 border border-parchment rounded-xl overflow-hidden">
                   {[1, 3, 5, 10, 25, 50, 9999].map((r) => (
                     <button
                       key={r}
                       onClick={() => onRadiusChange(r)}
-                      className={`flex-1 py-2 text-xs font-medium transition-colors ${
+                      className={`flex-1 py-2 text-xs font-medium transition-all duration-200 pressable ${
                         radius === r
                           ? "bg-charcoal text-cream"
                           : "bg-transparent text-graphite hover:bg-ecru"
@@ -127,7 +135,7 @@ export default function FilterSheet({
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => onCategoryChange("all")}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors border ${
+                className={`px-3.5 py-1.5 text-xs font-medium transition-all duration-200 border rounded-full pressable ${
                   activeCategory === "all"
                     ? "bg-charcoal text-cream border-charcoal"
                     : "bg-transparent text-graphite border-parchment hover:border-charcoal/30"
@@ -139,7 +147,7 @@ export default function FilterSheet({
                 <button
                   key={cat.value}
                   onClick={() => onCategoryChange(cat.value)}
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors border flex items-center gap-1 ${
+                  className={`px-3.5 py-1.5 text-xs font-medium transition-all duration-200 border rounded-full flex items-center gap-1 pressable ${
                     activeCategory === cat.value
                       ? "bg-charcoal text-cream border-charcoal"
                       : "bg-transparent text-graphite border-parchment hover:border-charcoal/30"
@@ -162,7 +170,7 @@ export default function FilterSheet({
                 <button
                   key={tag.value}
                   onClick={() => onTagToggle(tag.value)}
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors border ${
+                  className={`px-3.5 py-1.5 text-xs font-medium transition-all duration-200 border rounded-full pressable ${
                     activeTags.includes(tag.value)
                       ? "bg-terracotta text-white border-terracotta"
                       : "bg-transparent text-graphite border-parchment hover:border-charcoal/30"
@@ -189,7 +197,7 @@ export default function FilterSheet({
                 <button
                   key={opt.value}
                   onClick={() => onSortChange(opt.value)}
-                  className={`px-3 py-1.5 text-xs font-medium transition-colors border ${
+                  className={`px-3.5 py-1.5 text-xs font-medium transition-all duration-200 border rounded-full pressable ${
                     sortMode === opt.value
                       ? "bg-charcoal text-cream border-charcoal"
                       : "bg-transparent text-graphite border-parchment hover:border-charcoal/30"
@@ -203,18 +211,18 @@ export default function FilterSheet({
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-cream border-t border-parchment px-6 py-4 flex items-center gap-3">
+        <div className="sticky bottom-0 bg-cream border-t border-parchment px-6 py-4 flex items-center gap-3 rounded-b-2xl sm:rounded-b-2xl">
           {hasActiveFilters && (
             <button
               onClick={() => { onClearAll(); setLocQuery(""); }}
-              className="text-sm text-terracotta hover:text-terracotta-dark font-medium"
+              className="btn-ghost text-terracotta hover:text-terracotta-dark"
             >
               Clear all
             </button>
           )}
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 bg-charcoal text-cream text-sm font-medium hover:bg-graphite transition-colors"
+            className="flex-1 py-2.5 btn-primary justify-center"
           >
             Show results
           </button>

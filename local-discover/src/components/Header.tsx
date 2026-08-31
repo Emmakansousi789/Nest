@@ -1,41 +1,21 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-
 interface HeaderProps {
   onSearchOpen: () => void;
   onFilterOpen: () => void;
   filterCount: number;
-  viewMode?: "shopper" | "seller";
-  onViewModeChange?: (mode: "shopper" | "seller") => void;
 }
 
 export default function Header({
   onSearchOpen,
   onFilterOpen,
   filterCount,
-  viewMode = "shopper",
-  onViewModeChange,
 }: HeaderProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [menuOpen]);
-
   return (
     <header className="sticky top-0 z-40 bg-linen/90 backdrop-blur-sm border-b border-parchment">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2">
+        <a href="/" className="flex items-center gap-2 pressable focus-ring rounded-lg">
           <span className="font-serif text-xl font-semibold tracking-tight text-charcoal">
             LD
           </span>
@@ -44,10 +24,10 @@ export default function Header({
         {/* Center: Search trigger */}
         <button
           onClick={onSearchOpen}
-          className="flex-1 max-w-md mx-4 flex items-center gap-2 text-stone hover:text-charcoal transition-colors text-sm"
+          className="flex-1 max-w-md mx-4 flex items-center gap-2 text-stone hover:text-charcoal hover:bg-ecru/60 transition-all duration-200 text-sm px-3 py-2 rounded-xl focus-ring"
         >
           <svg
-            className="w-4 h-4"
+            className="w-4 h-4 shrink-0"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -62,87 +42,31 @@ export default function Header({
           <span className="hidden sm:inline">Search businesses…</span>
         </button>
 
-        {/* Right: Filter + Persona toggle + Menu */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onFilterOpen}
-            className="relative flex items-center gap-1.5 px-3 py-1.5 text-sm text-stone hover:text-charcoal transition-colors rounded-xl"
+        {/* Right: Filter */}
+        <button
+          onClick={onFilterOpen}
+          className="relative flex items-center gap-1.5 px-3 py-2 text-sm text-stone hover:text-charcoal hover:bg-ecru/60 transition-all duration-200 rounded-xl focus-ring pressable"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.5}
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"
-              />
-            </svg>
-            <span className="hidden sm:inline text-sm">Filters</span>
-            {filterCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-terracotta text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                {filterCount}
-              </span>
-            )}
-          </button>
-
-          {/* Inline View Toggle */}
-          {onViewModeChange && (
-            <div className="flex items-center bg-ecru rounded-full p-0.5 border border-parchment">
-              <button
-                onClick={() => onViewModeChange("shopper")}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                  viewMode === "shopper"
-                    ? "bg-charcoal text-cream shadow-sm"
-                    : "text-stone hover:text-charcoal"
-                }`}
-              >
-                🛒 Shop
-              </button>
-              <button
-                onClick={() => onViewModeChange("seller")}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
-                  viewMode === "seller"
-                    ? "bg-charcoal text-cream shadow-sm"
-                    : "text-stone hover:text-charcoal"
-                }`}
-              >
-                📊 Business
-              </button>
-            </div>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"
+            />
+          </svg>
+          <span className="hidden sm:inline text-sm">Filters</span>
+          {filterCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-terracotta text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+              {filterCount}
+            </span>
           )}
-
-          {/* User menu */}
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="w-8 h-8 rounded-full bg-charcoal text-cream text-xs font-semibold flex items-center justify-center hover:bg-graphite transition-colors"
-            >
-              D
-            </button>
-
-            {menuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-cream border border-parchment shadow-lg rounded-xl z-50 py-1">
-                <div className="px-4 py-3 border-b border-parchment">
-                  <p className="text-sm font-semibold text-charcoal">Demo User</p>
-                  <p className="text-xs text-stone">demo@localdiscover.com</p>
-                </div>
-                <button
-                  onClick={() => {
-                    onViewModeChange?.("seller");
-                    setMenuOpen(false);
-                  }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-graphite hover:bg-ecru transition-colors flex items-center gap-2"
-                >
-                  <span className="text-xs">🏪</span> Business Dashboard
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+        </button>
       </div>
     </header>
   );

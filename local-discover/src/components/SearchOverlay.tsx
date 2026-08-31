@@ -49,8 +49,12 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
 
   return (
     <div className="fixed inset-0 z-50 bg-linen flex flex-col">
+      {/* Search bar */}
       <div className="border-b border-parchment px-4 sm:px-6 py-4 flex items-center gap-3">
-        <button onClick={onClose} className="text-stone hover:text-charcoal">
+        <button
+          onClick={onClose}
+          className="w-8 h-8 flex items-center justify-center rounded-full text-stone hover:text-charcoal hover:bg-ecru transition-all duration-200 pressable focus-ring"
+        >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -61,10 +65,21 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search businesses, products, cities..."
-          className="flex-1 bg-transparent border-b border-charcoal/20 focus:border-charcoal py-1.5 text-base text-charcoal placeholder:text-clay outline-none transition-colors font-sans"
+          className="flex-1 bg-transparent border-b-2 border-charcoal/15 focus:border-charcoal py-1.5 text-base text-charcoal placeholder:text-clay outline-none transition-colors font-sans"
         />
+        {query.length > 0 && (
+          <button
+            onClick={() => setQuery("")}
+            className="w-6 h-6 flex items-center justify-center rounded-full bg-parchment text-stone hover:bg-charcoal/10 transition-colors pressable"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
 
+      {/* Results */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         {query.length < 2 ? (
           <div>
@@ -79,7 +94,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                     key={vendor.id}
                     href={`/vendor/${vendor.id}`}
                     onClick={onClose}
-                    className="flex items-center gap-3 py-3 border-b border-parchment hover:bg-ecru/50 transition-colors -mx-4 px-4"
+                    className="flex items-center gap-3 py-3 border-b border-parchment hover:bg-ecru/50 active:bg-ecru transition-colors -mx-4 px-4 pressable"
                   >
                     <span className="text-lg">{category?.icon || "🏪"}</span>
                     <div className="flex-1 min-w-0">
@@ -105,7 +120,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                     key={vendor.id}
                     href={`/vendor/${vendor.id}`}
                     onClick={onClose}
-                    className="flex items-center gap-3 py-3 border-b border-parchment hover:bg-ecru/50 transition-colors -mx-4 px-4"
+                    className="flex items-center gap-3 py-3 border-b border-parchment hover:bg-ecru/50 active:bg-ecru transition-colors -mx-4 px-4 pressable"
                   >
                     <span className="text-lg">{category?.icon || "🏪"}</span>
                     <div className="flex-1 min-w-0">
@@ -120,7 +135,13 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
           </div>
         ) : (
           <div className="text-center py-16">
-            <p className="text-sm text-stone">No businesses match &ldquo;{query}&rdquo;</p>
+            <div className="state-icon state-icon-stone mx-auto">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+            </div>
+            <p className="text-sm font-medium text-charcoal mb-1">No results found</p>
+            <p className="text-xs text-stone">No businesses match &ldquo;{query}&rdquo;</p>
           </div>
         )}
       </div>

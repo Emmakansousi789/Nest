@@ -58,14 +58,13 @@ export default function MapViewInner({
 
       L.control.zoom({ position: "bottomright" }).addTo(map);
 
-      // Clean, warm-toned cartography (CartoDB Positron — no desaturation hack needed)
+      // CartoDB Voyager tiles — clean, colorful, modern cartography
       L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        "https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png?key=cb1_2nhn_1_183db472ffd80be3f3616e3a",
         {
           attribution:
             '&copy; <a href="https://openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
           maxZoom: 19,
-          subdomains: "abcd",
         }
       ).addTo(map);
 

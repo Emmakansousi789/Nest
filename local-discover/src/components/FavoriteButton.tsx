@@ -1,6 +1,7 @@
 "use client";
 
 import { getFavorites, toggleFavorite } from "@/lib/favorites";
+import { useState } from "react";
 
 interface FavoriteButtonProps {
   vendorId: string;
@@ -10,23 +11,28 @@ interface FavoriteButtonProps {
 export default function FavoriteButton({ vendorId, size = "sm" }: FavoriteButtonProps) {
   const favorites = getFavorites();
   const isFav = favorites.includes(vendorId);
+  const [animating, setAnimating] = useState(false);
   const iconSize = size === "sm" ? "w-4 h-4" : "w-5 h-5";
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAnimating(true);
+    toggleFavorite(vendorId);
+    setTimeout(() => setAnimating(false), 300);
+  };
 
   return (
     <button
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        toggleFavorite(vendorId);
-      }}
-      className="w-full h-full flex items-center justify-center"
+      onClick={handleClick}
+      className={`w-full h-full flex items-center justify-center transition-transform duration-200 ${animating ? "scale-125" : "scale-100"}`}
       aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
     >
       <svg
         className={iconSize}
-        fill={isFav ? "#1C1917" : "none"}
+        fill={isFav ? "#C84B31" : "none"}
         viewBox="0 0 24 24"
-        stroke="#1C1917"
+        stroke={isFav ? "#C84B31" : "#1C1917"}
         strokeWidth={1.5}
       >
         <path

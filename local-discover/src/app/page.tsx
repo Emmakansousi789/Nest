@@ -78,6 +78,7 @@ function DiscoverPage() {
   const [viewPersona, setViewPersona] = useState<"shopper" | "seller">(
     "shopper"
   );
+  const [sellerActiveTab, setSellerActiveTab] = useState<"dashboard" | "listing" | "reviews" | "messages">("dashboard");
 
   const [filterOpen, setFilterOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -226,10 +227,12 @@ function DiscoverPage() {
           onSearchOpen={() => {}}
           onFilterOpen={() => {}}
           filterCount={0}
-          viewMode={viewPersona}
-          onViewModeChange={setViewPersona}
         />
-        <SellerDashboard />
+
+        <SellerDashboard
+          activeSellerTab={sellerActiveTab}
+          onSellerTabChange={setSellerActiveTab}
+        />
         {/* Seller bottom nav — Instagram floating pill */}
         <nav
           className="mobile-nav md:hidden"
@@ -252,7 +255,11 @@ function DiscoverPage() {
               <span className="nav-label">Shop</span>
             </button>
             {/* Dashboard */}
-            <button className="active" aria-label="Dashboard">
+            <button
+              onClick={() => setSellerActiveTab("dashboard")}
+              className={sellerActiveTab === "dashboard" ? "active" : ""}
+              aria-label="Dashboard"
+            >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="7" height="7" rx="1"/>
                 <rect x="14" y="3" width="7" height="7" rx="1"/>
@@ -262,15 +269,22 @@ function DiscoverPage() {
               <span className="nav-label">Dashboard</span>
             </button>
             {/* Messages */}
-            <button className="" aria-label="Messages">
+            <button
+              onClick={() => setSellerActiveTab("messages")}
+              className={sellerActiveTab === "messages" ? "active" : ""}
+              aria-label="Messages"
+            >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
               </svg>
-              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-terracotta rounded-full" />
               <span className="nav-label">Messages</span>
             </button>
-            {/* Settings / Profile */}
-            <button className="" aria-label="Account">
+            {/* Account / Profile */}
+            <button
+              onClick={() => setSellerActiveTab("listing")}
+              className={sellerActiveTab === "listing" ? "active" : ""}
+              aria-label="Account"
+            >
               <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-white/30">
                 <div className="w-full h-full bg-gradient-to-br from-[#C84B31] to-[#9A3412] flex items-center justify-center">
                   <span className="text-white text-[10px] font-bold">B</span>
@@ -298,9 +312,27 @@ function DiscoverPage() {
         onSearchOpen={() => setSearchOpen(true)}
         onFilterOpen={() => setFilterOpen(true)}
         filterCount={filterCount}
-        viewMode={viewPersona}
-        onViewModeChange={setViewPersona}
       />
+
+      {/* Shop / Business toggle — standalone row */}
+      <div className="bg-linen border-b border-parchment">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-center">
+          <div className="flex items-center bg-ecru rounded-full p-0.5 border border-parchment">
+            <button
+              onClick={() => setViewPersona("shopper")}
+              className="px-4 py-1.5 rounded-full text-xs font-medium transition-all bg-charcoal text-cream shadow-sm"
+            >
+              Shop
+            </button>
+            <button
+              onClick={() => setViewPersona("seller")}
+              className="px-4 py-1.5 rounded-full text-xs font-medium transition-all text-stone hover:text-charcoal"
+            >
+              Business
+            </button>
+          </div>
+        </div>
+      </div>
 
       <SearchOverlay isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
@@ -548,7 +580,11 @@ function DiscoverPage() {
           <main id="main-content" className="flex-1 pb-24">
             {filteredVendors.length === 0 ? (
               <div className="text-center py-24 px-4">
-                <div className="text-5xl mb-4 opacity-40">🔍</div>
+                <div className="state-icon state-icon-stone">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                  </svg>
+                </div>
                 <h3 className="font-serif text-xl font-semibold text-charcoal mb-2">
                   No businesses found
                 </h3>
@@ -559,7 +595,7 @@ function DiscoverPage() {
                 </p>
                 <button
                   onClick={clearAll}
-                  className="px-6 py-2.5 bg-charcoal text-cream text-sm font-medium hover:bg-graphite transition-colors"
+                  className="btn-primary pressable"
                 >
                   Clear all filters
                 </button>

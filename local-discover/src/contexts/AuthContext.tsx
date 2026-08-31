@@ -1,7 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 import { User } from "@/types";
 
 interface AuthState {
@@ -26,67 +25,41 @@ export function useAuth() {
   return ctx;
 }
 
+// Demo user for testing — auth is disabled
+const DEMO_BUSINESS_USER: User = {
+  id: "demo-business-1",
+  name: "Demo Business Owner",
+  email: "demo@localdiscover.com",
+  role: "business",
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data: session, status } = useSession();
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(DEMO_BUSINESS_USER);
+  const [loading] = useState(false);
 
-  // Sync NextAuth session to our User type
-  const user: User | null = session?.user
-    ? {
-        id: (session.user as { id?: string }).id || "",
-        name: session.user.name || "",
-        email: session.user.email || "",
-        role: (session.user as { role?: string }).role === "BUSINESS" ? "business" : "customer",
-      }
-    : null;
-
-  useEffect(() => {
-    setLoading(status === "loading");
-  }, [status]);
-
-  const login = useCallback(async (email: string, password: string) => {
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-    if (result?.error) {
-      return { error: "Invalid email or password" };
-    }
+  const login = useCallback(async (_email: string, _password: string) => {
+    // Auth disabled — always succeed
     return {};
   }, []);
 
-  const signup = useCallback(async (data: {
+  const signup = useCallback(async (_data: {
     name: string;
     email: string;
     password: string;
     role: "customer" | "business";
     businessName?: string;
   }) => {
-    // Call our signup API
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    const result = await res.json();
-    if (result.error) {
-      return { error: result.error };
-    }
-    // Auto-login after signup
-    const loginResult = await signIn("credentials", {
-      email: data.email,
-      password: data.password,
-      redirect: false,
-    });
-    if (loginResult?.error) {
-      return { error: "Account created but login failed" };
-    }
+    // Auth disabled — always succeed
     return {};
   }, []);
 
   const logout = useCallback(() => {
-    signOut();
+    // Auth disabled — just toggle to customer view
+    setUser((prev) =>
+      prev?.role === "business"
+        ? { ...prev, role: "customer", name: "Demo Customer" }
+        : DEMO_BUSINESS_USER
+    );
   }, []);
 
   return (

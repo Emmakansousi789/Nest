@@ -12,9 +12,15 @@ import type { Message } from "@/types";
 
 type BizTab = "dashboard" | "listing" | "reviews" | "messages";
 
-export default function SellerDashboard() {
+interface SellerDashboardProps {
+  activeSellerTab?: BizTab;
+  onSellerTabChange?: (tab: BizTab) => void;
+}
+
+export default function SellerDashboard({ activeSellerTab, onSellerTabChange }: SellerDashboardProps) {
   const { user, logout } = useAuth();
-  const [activeTab, setActiveTab] = useState<BizTab>("dashboard");
+  const [internalTab, setInternalTab] = useState<BizTab>("dashboard");
+  const activeTab = activeSellerTab ?? internalTab;
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -30,7 +36,8 @@ export default function SellerDashboard() {
   }, [user]);
 
   const switchTab = (tab: BizTab) => {
-    setActiveTab(tab);
+    if (onSellerTabChange) onSellerTabChange(tab);
+    else setInternalTab(tab);
     if (vendor) {
       if (tab === "reviews") {
         setReviews(getReviewsForVendor(vendor.id));
@@ -51,19 +58,8 @@ export default function SellerDashboard() {
     }
   }, [vendor]);
 
-  if (!user || user.role !== "business") {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 px-4">
-        <div className="w-16 h-16 rounded-2xl bg-ecru flex items-center justify-center mb-4">
-          <StorefrontOutline size={32} className="text-charcoal" />
-        </div>
-        <h2 className="text-xl font-bold text-charcoal mb-2">Business Owner Dashboard</h2>
-        <p className="text-sm text-stone text-center max-w-sm mb-5">
-          Sign in as a business owner to manage your listing, respond to reviews, and message customers.
-        </p>
-      </div>
-    );
-  }
+  // Auth disabled for testing — always show dashboard
+  // if (!user || user.role !== "business") { ... }
 
   const tabs: { id: BizTab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: "dashboard", label: "Dashboard", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
@@ -107,23 +103,23 @@ export default function SellerDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-charcoal">
-            {vendor?.name || "Your Business"} 👋
+            {vendor?.name || "Your Business"}
           </h2>
           <p className="text-sm text-stone">Business Owner Dashboard</p>
         </div>
-        <button onClick={logout} className="text-xs text-stone hover:text-charcoal px-3 py-1.5 rounded-xl hover:bg-ecru transition-colors">
+        <button onClick={logout} className="btn-ghost text-xs pressable focus-ring">
           Sign Out
         </button>
       </div>
 
       {/* Tab bar — grid, no scroll */}
-      <div className="grid grid-cols-4 gap-1 bg-ecru rounded-xl p-1 overflow-hidden">
+      <div className="grid grid-cols-4 gap-1 bg-ecru rounded-xl p-1">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => switchTab(tab.id)}
-            className={`relative flex items-center justify-center gap-1 px-1 sm:px-2 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${
-              activeTab === tab.id ? "bg-cream text-charcoal shadow-sm" : "text-stone hover:text-charcoal"
+            className={`relative flex items-center justify-center gap-1 px-1 sm:px-2 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 pressable focus-ring ${
+              activeTab === tab.id ? "bg-cream text-charcoal shadow-sm" : "text-stone hover:text-charcoal hover:bg-cream/50"
             }`}
           >
             {tab.icon}
@@ -142,7 +138,7 @@ export default function SellerDashboard() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             {stats.map((stat) => (
-              <div key={stat.label} className="bg-cream rounded-2xl border border-parchment p-4">
+              <div key={stat.label} className="bg-cream rounded-2xl border border-parchment p-4 card-interactive">
                 <p className="text-xs text-stone mb-1">{stat.label}</p>
                 <div className="flex items-end justify-between">
                   <p className="text-2xl font-bold text-charcoal">{stat.value}</p>

@@ -20,10 +20,12 @@ export default function BusinessListingEditor() {
 
   if (!vendor) {
     return (
-      <div className="text-center py-12">
-        <svg className="w-12 h-12 mx-auto mb-3 text-terracotta" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 9.75l1.5-4.5h15l1.5 4.5M3 9.75v9a1.5 1.5 0 001.5 1.5h15a1.5 1.5 0 001.5-1.5v-9M3 9.75h18M8.25 21v-6a1.5 1.5 0 011.5-1.5h4.5a1.5 1.5 0 011.5 1.5v6" />
-        </svg>
+      <div className="text-center py-16">
+        <div className="state-icon state-icon-terracotta">
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9.75l1.5-4.5h15l1.5 4.5M3 9.75v9a1.5 1.5 0 001.5 1.5h15a1.5 1.5 0 001.5-1.5v-9M3 9.75h18M8.25 21v-6a1.5 1.5 0 011.5-1.5h4.5a1.5 1.5 0 011.5 1.5v6" />
+          </svg>
+        </div>
         <h3 className="text-lg font-semibold text-charcoal mb-2">No listing yet</h3>
         <p className="text-sm text-stone max-w-sm mx-auto">
           Complete the onboarding to create your business listing.
@@ -50,9 +52,16 @@ export default function BusinessListingEditor() {
         <h2 className="text-lg font-bold text-charcoal">Edit Listing</h2>
         <button
           onClick={handleSave}
-          className="px-5 py-2 bg-terracotta text-white rounded-xl text-sm font-medium hover:bg-terracotta-dark transition-colors"
+          className="btn-primary pressable"
         >
-          {saved ? "✓ Saved!" : "Save Changes"}
+          {saved ? (
+            <span className="flex items-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              Saved!
+            </span>
+          ) : "Save Changes"}
         </button>
       </div>
 
