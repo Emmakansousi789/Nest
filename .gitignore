@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# Freebuff tooling
+.freebuff/
+
+# Local-discover's own git repo
+local-discover/.git/
+AGENTS.md\nCLAUDE.md
