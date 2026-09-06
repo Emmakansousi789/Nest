@@ -79,16 +79,19 @@ async function main() {
   // ─── Seed Vendors ───
   console.log(`📦 Seeding ${seedVendors.length} vendors...`);
   for (const vendor of seedVendors) {
-    const { photos, products, ...rest } = vendor;
+    const { photos, products, joinedDate, ...rest } = vendor;
+    const joinedDateObj = new Date(joinedDate as unknown as string);
     await prisma.vendor.upsert({
       where: { id: vendor.id },
       update: {
         ...rest,
+        joinedDate: joinedDateObj,
         hours: rest.hours as unknown as Record<string, unknown>,
         products: products as unknown as Record<string, unknown>[],
       },
       create: {
         ...rest,
+        joinedDate: joinedDateObj,
         hours: rest.hours as unknown as Record<string, unknown>,
         products: products as unknown as Record<string, unknown>[],
         photos: {
