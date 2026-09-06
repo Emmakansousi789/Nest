@@ -3,22 +3,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";
 import { User } from "@/types";
 
-// ⚡ DEVELOPMENT BYPASS — set to true to auto-login as a demo business user
-// Flip this to false before deploying to production
-const DEV_AUTH_BYPASS = false;
-
-// Build-time assertion to prevent shipping with bypass enabled
-if (DEV_AUTH_BYPASS && process.env.NODE_ENV === "production") {
-  throw new Error("CRITICAL: DEV_AUTH_BYPASS must be false in production");
-}
-
-const DEV_USER: User = {
-  id: "dev-user-001",
-  name: "Dev User",
-  email: "dev@localdiscover.com",
-  role: "business",
-};
-
 interface AuthState {
   user: User | null;
   loading: boolean;
@@ -47,13 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Fetch current session on mount
   useEffect(() => {
-    if (DEV_AUTH_BYPASS) {
-      // Skip API — auto-login as dev user
-      setUser(DEV_USER);
-      setLoading(false);
-      return;
-    }
-
     async function fetchSession() {
       try {
         const res = await fetch("/api/auth/session");
@@ -76,11 +53,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    if (DEV_AUTH_BYPASS) {
-      setUser(DEV_USER);
-      return {};
-    }
-
     try {
       // Fetch CSRF token from NextAuth before submitting
       const csrfRes = await fetch("/api/auth/csrf");
@@ -125,11 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role: "customer" | "business";
     businessName?: string;
   }) => {
-    if (DEV_AUTH_BYPASS) {
-      setUser(DEV_USER);
-      return {};
-    }
-
     try {
       const res = await fetch("/api/auth/signup", {
         method: "POST",
@@ -150,11 +117,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [login]);
 
   const logout = useCallback(async () => {
-    if (DEV_AUTH_BYPASS) {
-      setUser(null);
-      return;
-    }
-
     try {
       await fetch("/api/auth/signout", { method: "POST" });
     } finally {

@@ -28,6 +28,8 @@
     "@capacitor/keyboard": "^8.0.5",
     "@capacitor/splash-screen": "^8.0.2",
     "@capacitor/status-bar": "^8.0.3",
+    "@capawesome/capacitor-apple-sign-in": "^0.1.4",
+    "@capgo/capacitor-app-tracking-transparency": "^8.1.15",
     "@prisma/client": "^5.22.0",
     "@supabase/supabase-js": "^2.115.0",
     "@upstash/ratelimit": "^2.0.8",

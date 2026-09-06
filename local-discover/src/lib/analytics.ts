@@ -1,7 +1,7 @@
 /**
  * Lightweight analytics event tracking.
- * Stores events in localStorage for now; swap for a real analytics provider
- * (PostHog, Mixpanel, Amplitude) when ready for production analytics.
+ * All tracking is gated behind user consent (ATT on iOS).
+ * No events fire until setConsent(true) is called.
  */
 
 type EventName =
@@ -29,7 +29,42 @@ interface AnalyticsEvent {
 
 const SESSION_KEY = "ld-analytics-session";
 const EVENTS_KEY = "ld-analytics-events";
-const MAX_EVENTS = 500; // Keep last 500 events in localStorage
+const CONSENT_KEY = "ld-tracking-consent";
+const MAX_EVENTS = 500;
+
+let consentGranted = false;
+
+/**
+ * Initialize consent state from storage on load.
+ * Must be called once at app startup before any trackEvent calls.
+ */
+export function initAnalytics(): void {
+  if (typeof window === "undefined") return;
+  const stored = localStorage.getItem(CONSENT_KEY);
+  consentGranted = stored === "true";
+}
+
+/**
+ * Set tracking consent. Called after ATT prompt or consent screen.
+ */
+export function setConsent(granted: boolean): void {
+  consentGranted = granted;
+  if (typeof window !== "undefined") {
+    localStorage.setItem(CONSENT_KEY, granted ? "true" : "false");
+    // Clear stored events if consent is revoked
+    if (!granted) {
+      localStorage.removeItem(EVENTS_KEY);
+      localStorage.removeItem(SESSION_KEY);
+    }
+  }
+}
+
+/**
+ * Check if tracking consent has been granted.
+ */
+export function hasConsent(): boolean {
+  return consentGranted;
+}
 
 function getSessionId(): string {
   if (typeof window === "undefined") return "server";
@@ -43,6 +78,7 @@ function getSessionId(): string {
 
 /**
  * Track an analytics event.
+ * NO-OPS if consent has not been granted.
  * Safe to call from any component — no-ops on server side.
  */
 export function trackEvent(
@@ -50,6 +86,7 @@ export function trackEvent(
   properties?: Record<string, string | number | boolean>
 ): void {
   if (typeof window === "undefined") return;
+  if (!consentGranted) return; // Consent gate — the critical fix
 
   const event: AnalyticsEvent = {
     name,
@@ -63,7 +100,6 @@ export function trackEvent(
     const events: AnalyticsEvent[] = stored ? JSON.parse(stored) : [];
     events.push(event);
 
-    // Trim to max events
     if (events.length > MAX_EVENTS) {
       events.splice(0, events.length - MAX_EVENTS);
     }

@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { signInWithApple } from "@capawesome/capacitor-apple-sign-in";
+import { Capacitor } from "@capacitor/core";
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -12,6 +15,7 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: AuthModalProps) {
   const { login, signup } = useAuth();
+  const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [role, setRole] = useState<"customer" | "business">("customer");
   const [name, setName] = useState("");
@@ -127,6 +131,70 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: A
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                 </svg>
                 {error}
+              </div>
+            )}
+
+            {/* Sign in with Apple — equally prominent, shown above email for both modes */}
+            {mode === "signin" && (
+              <button
+                type="button"
+                onClick={async () => {
+                  setLoading(true);
+                  setError("");
+                  try {
+                    if (Capacitor.isNativePlatform()) {
+                      const result = await signInWithApple({
+                        clientId: "app.localdiscover.mobile",
+                        scopes: "name email",
+                      });
+                      // On native, send the identity token to our auth endpoint
+                      const res = await fetch("/api/auth/callback/credential", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          token: result.response?.identityToken,
+                          provider: "apple",
+                        }),
+                      });
+                      if (res.ok) {
+                        const sessionRes = await fetch("/api/auth/session");
+                        const sessionData = await sessionRes.json();
+                        if (sessionData?.user) {
+                          onClose();
+                          window.location.reload();
+                          return;
+                        }
+                      }
+                      setError("Apple Sign In failed. Please try again.");
+                    } else {
+                      // Web: redirect to NextAuth Apple provider
+                      router.push("/api/auth/signin/apple");
+                    }
+                  } catch (err) {
+                    if ((err as Error)?.message?.includes("cancelled")) {
+                      // User cancelled — no error needed
+                    } else {
+                      setError("Apple Sign In failed. Please try again.");
+                    }
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="w-full py-3 bg-black text-white rounded-xl text-sm font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+                </svg>
+                Sign in with Apple
+              </button>
+            )}
+
+            {/* Divider */}
+            {mode === "signin" && (
+              <div className="flex items-center gap-3 my-1">
+                <div className="flex-1 border-t border-parchment" />
+                <span className="text-[10px] text-clay uppercase tracking-wider">or</span>
+                <div className="flex-1 border-t border-parchment" />
               </div>
             )}
 
