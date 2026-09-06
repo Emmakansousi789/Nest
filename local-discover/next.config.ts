@@ -27,9 +27,15 @@ const securityHeaders = [
   },
 ];
 
+const isStaticExport = process.env.EXPORT_STATIC === "true";
+
 const nextConfig: NextConfig = {
+  // Enable static export for Capacitor native builds
+  output: isStaticExport ? "export" : undefined,
   images: {
     remotePatterns: [{ protocol: "https", hostname: "**" }],
+    // Static export doesn't support image optimization
+    unoptimized: isStaticExport,
   },
   async headers() {
     return [

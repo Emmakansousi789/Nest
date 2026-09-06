@@ -57,3 +57,13 @@ next-env.d.ts
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Capacitor native projects (build locally with Xcode/Android Studio)
+/ios/
+/android/
+/out/
+
+# Capacitor temp files
+.api-backup
+.middleware-backup
+.market-detail-backup
