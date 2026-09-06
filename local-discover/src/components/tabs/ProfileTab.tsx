@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { getVendors, getAllReviews } from "@/data/store";
+import { getAllReviews } from "@/data/store";
+import { useVendors } from "@/hooks/useVendors";
 import { getFavorites } from "@/lib/favorites";
 import PullToRefresh from "@/components/PullToRefresh";
 import AuthModal from "@/components/AuthModal";
@@ -251,6 +252,9 @@ export default function ProfileTab() {
     }
   }, [view, user]);
 
+  const { vendors: allVendors } = useVendors();
+  const savedVendors = allVendors.filter((v) => savedIds.includes(v.id));
+
   const handleRefresh = useCallback(() => {
     return new Promise<void>((resolve) => {
       getFavorites().then(setSavedIds);
@@ -268,8 +272,6 @@ export default function ProfileTab() {
       </div>
     );
   }
-
-  const savedVendors = getVendors().filter((v) => savedIds.includes(v.id));
   const allReviews = user ? getAllReviews() : [];
 
   // ─── Notifications ───

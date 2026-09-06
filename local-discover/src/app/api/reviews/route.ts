@@ -3,6 +3,41 @@ import { auth } from "@/lib/auth";
 import { createReviewSchema, respondReviewSchema } from "@/lib/validations";
 import { prisma } from "@/lib/prisma";
 import { moderateContent } from "@/lib/moderation";
+import { reviews as seedReviews } from "@/data/reviews";
+
+// GET /api/reviews?vendorId=xxx — Get reviews for a vendor (with seed fallback)
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const vendorId = url.searchParams.get("vendorId");
+  if (!vendorId) {
+    return NextResponse.json({ error: "vendorId required" }, { status: 400 });
+  }
+
+  try {
+    const dbReviews = await prisma.review.findMany({
+      where: { vendorId },
+      orderBy: { createdAt: "desc" },
+    });
+    if (dbReviews.length > 0) {
+      return NextResponse.json({
+        reviews: dbReviews.map((r) => ({
+          id: r.id,
+          vendorId: r.vendorId,
+          authorName: r.authorName,
+          rating: r.rating,
+          text: r.text,
+          date: r.createdAt.toISOString().split("T")[0],
+          response: (r.response as { text: string; date: string }) || undefined,
+        })),
+        source: "database",
+      });
+    }
+  } catch {
+    // DB unavailable
+  }
+
+  return NextResponse.json({ reviews: seedReviews.filter((r) => r.vendorId === vendorId), source: "seed" });
+}
 
 // POST /api/reviews — Create a new review
 export async function POST(req: Request) {

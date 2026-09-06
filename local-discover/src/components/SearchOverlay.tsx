@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { getVendors } from "@/data/store";
+import { useVendors } from "@/hooks/useVendors";
 import { categories } from "@/data/vendors";
 
 interface SearchOverlayProps {
@@ -13,6 +13,7 @@ interface SearchOverlayProps {
 export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
   const [query, setQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const { vendors: allVendors } = useVendors();
 
   useEffect(() => {
     if (isOpen) {
@@ -26,7 +27,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
 
   const results =
     query.length >= 2
-      ? getVendors().filter((v) => {
+      ? allVendors.filter((v) => {
           const q = query.toLowerCase();
           return (
             v.name.toLowerCase().includes(q) ||
@@ -45,7 +46,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
         })
       : [];
 
-  const popular = getVendors().slice(0, 6);
+  const popular = allVendors.slice(0, 6);
 
   return (
     <div className="fixed inset-0 z-50 bg-linen flex flex-col">

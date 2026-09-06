@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import MapView from "@/components/MapView";
-import { vendors } from "@/data/vendors";
+import { useVendors } from "@/hooks/useVendors";
 import { seedMarkets } from "@/data/markets";
 import { searchPlaces, type GeoResult } from "@/lib/geocode";
 import { haversineDistance } from "@/lib/distance";
@@ -71,13 +71,15 @@ export default function MapTab() {
     ? [selectedLocation.lat, selectedLocation.lng]
     : [33.749, -84.388];
 
+  const { vendors: allVendors } = useVendors();
+
   const nearbyVendors = selectedLocation
-    ? vendors.filter(
+    ? allVendors.filter(
         (v) =>
           haversineDistance(selectedLocation.lat, selectedLocation.lng, v.lat, v.lng) <=
           DEFAULT_RADIUS_MILES
       )
-    : vendors;
+    : allVendors;
 
   return (
     <div className="flex flex-col h-full pb-16">

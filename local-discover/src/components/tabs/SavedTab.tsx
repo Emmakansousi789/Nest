@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import VendorCard from "@/components/VendorCard";
-import { getVendors } from "@/data/store";
+import { useVendors } from "@/hooks/useVendors";
 import { getFavorites } from "@/lib/favorites";
 import PullToRefresh from "@/components/PullToRefresh";
 
 export default function SavedTab() {
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [mounted, setMounted] = useState(false);
+  const { vendors: allVendors } = useVendors();
 
   useEffect(() => {
     setMounted(true);
@@ -18,7 +19,7 @@ export default function SavedTab() {
     return () => window.removeEventListener("favorites-changed", handleChange);
   }, []);
 
-  const savedVendors = getVendors().filter((v) => favoriteIds.includes(v.id));
+  const savedVendors = allVendors.filter((v) => favoriteIds.includes(v.id));
 
   const handleRefresh = useCallback(() => {
     return new Promise<void>((resolve) => {

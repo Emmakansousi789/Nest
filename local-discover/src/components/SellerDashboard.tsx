@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getVendorByOwner, getReviewsForVendor, getMessagesForVendor, addReviewResponse, addMessageResponse, getUnreadMessageCount } from "@/data/store";
+import { useVendors } from "@/hooks/useVendors";
 import StarRating from "./StarRating";
 import BusinessListingEditor from "./BusinessListingEditor";
 import MarketCreationForm from "./MarketCreationForm";
@@ -22,6 +22,7 @@ export default function SellerDashboard({ activeSellerTab, onSellerTabChange }: 
   const { user, logout } = useAuth();
   const [internalTab, setInternalTab] = useState<BizTab>("dashboard");
   const activeTab = activeSellerTab ?? internalTab;
+  const { vendors: allVendors } = useVendors();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -29,35 +30,55 @@ export default function SellerDashboard({ activeSellerTab, onSellerTabChange }: 
   const [reviewResponses, setReviewResponses] = useState<Record<string, string>>({});
   const [messageResponses, setMessageResponses] = useState<Record<string, string>>({});
 
+  // Find vendor owned by current user from API-backed data
   useEffect(() => {
     if (user) {
-      const v = getVendorByOwner(user.id);
-      if (v) setVendor(v);
+      const v = allVendors.find((v) => v.ownerId === user.id) || null;
+      setVendor(v);
     }
-  }, [user]);
+  }, [user, allVendors]);
+
+  // Fetch reviews from API when vendor is known or tab changes
+  const fetchReviews = useCallback(async () => {
+    if (!vendor) return;
+    try {
+      const res = await fetch(`/api/reviews?vendorId=${encodeURIComponent(vendor.id)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setReviews(data.reviews || []);
+      }
+    } catch {
+      // fallback — reviews stay as-is
+    }
+  }, [vendor]);
+
+  // Fetch messages from API when vendor is known
+  const fetchMessages = useCallback(async () => {
+    if (!vendor) return;
+    try {
+      const res = await fetch(`/api/messages?vendorId=${encodeURIComponent(vendor.id)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const msgs = data.messages || [];
+        setMessages(msgs);
+        setUnreadCount(msgs.filter((m: Message) => !m.read && !m.response).length);
+      }
+    } catch {
+      // fallback
+    }
+  }, [vendor]);
+
+  useEffect(() => {
+    fetchReviews();
+    fetchMessages();
+  }, [fetchReviews, fetchMessages]);
 
   const switchTab = (tab: BizTab) => {
     if (onSellerTabChange) onSellerTabChange(tab);
     else setInternalTab(tab);
-    if (vendor) {
-      if (tab === "reviews") {
-        setReviews(getReviewsForVendor(vendor.id));
-      } else if (tab === "messages") {
-        const msgs = getMessagesForVendor(vendor.id);
-        setMessages(msgs);
-        setUnreadCount(getUnreadMessageCount(vendor.id));
-      }
-    }
+    if (tab === "reviews") fetchReviews();
+    else if (tab === "messages") fetchMessages();
   };
-
-  useEffect(() => {
-    if (vendor) {
-      setReviews(getReviewsForVendor(vendor.id));
-      const msgs = getMessagesForVendor(vendor.id);
-      setMessages(msgs);
-      setUnreadCount(getUnreadMessageCount(vendor.id));
-    }
-  }, [vendor]);
 
   // Guard: only business owners can access the dashboard
   if (!user || user.role !== "business") {
@@ -92,22 +113,32 @@ export default function SellerDashboard({ activeSellerTab, onSellerTabChange }: 
     ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
     : 0;
 
-  const handleReviewResponse = (reviewId: string) => {
+  const handleReviewResponse = async (reviewId: string) => {
     const text = reviewResponses[reviewId];
     if (!text?.trim()) return;
-    addReviewResponse(reviewId, { text: text.trim(), date: new Date().toISOString() });
-    setReviews(getReviewsForVendor(vendor!.id));
-    setReviewResponses((prev) => ({ ...prev, [reviewId]: "" }));
+    try {
+      await fetch("/api/reviews", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviewId, responseText: text.trim() }),
+      });
+      await fetchReviews();
+      setReviewResponses((prev) => ({ ...prev, [reviewId]: "" }));
+    } catch { /* ignore */ }
   };
 
-  const handleMessageResponse = (messageId: string) => {
+  const handleMessageResponse = async (messageId: string) => {
     const text = messageResponses[messageId];
     if (!text?.trim()) return;
-    addMessageResponse(messageId, { text: text.trim(), date: new Date().toISOString() });
-    const msgs = getMessagesForVendor(vendor!.id);
-    setMessages(msgs);
-    setUnreadCount(getUnreadMessageCount(vendor!.id));
-    setMessageResponses((prev) => ({ ...prev, [messageId]: "" }));
+    try {
+      await fetch("/api/messages", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messageId, responseText: text.trim() }),
+      });
+      await fetchMessages();
+      setMessageResponses((prev) => ({ ...prev, [messageId]: "" }));
+    } catch { /* ignore */ }
   };
 
   return (

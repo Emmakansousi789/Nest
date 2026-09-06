@@ -3,6 +3,38 @@ import { auth } from "@/lib/auth";
 import { sendMessageSchema, respondMessageSchema } from "@/lib/validations";
 import { prisma } from "@/lib/prisma";
 import { moderateMessage } from "@/lib/moderation";
+import { getMessagesForVendor as getSeedMessages } from "@/data/store";
+
+// GET /api/messages?vendorId=xxx — Get messages for a vendor (with seed fallback)
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const vendorId = url.searchParams.get("vendorId");
+  if (!vendorId) {
+    return NextResponse.json({ error: "vendorId required" }, { status: 400 });
+  }
+
+  try {
+    const dbMessages = await prisma.message.findMany({
+      where: { vendorId },
+      orderBy: { createdAt: "desc" },
+    });
+    return NextResponse.json({
+      messages: dbMessages.map((m) => ({
+        id: m.id,
+        vendorId: m.vendorId,
+        senderId: m.senderId,
+        senderName: m.senderName,
+        text: m.text,
+        date: m.createdAt.toISOString(),
+        read: m.read,
+        response: (m.response as { text: string; date: string }) || undefined,
+      })),
+      source: "database",
+    });
+  } catch {
+    return NextResponse.json({ messages: getSeedMessages(vendorId), source: "seed" });
+  }
+}
 
 // POST /api/messages — Send a message to a vendor
 export async function POST(req: Request) {

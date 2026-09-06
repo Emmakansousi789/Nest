@@ -12,7 +12,7 @@ import MapTab from "@/components/tabs/MapTab";
 import SavedTab from "@/components/tabs/SavedTab";
 import ProfileTab from "@/components/tabs/ProfileTab";
 import { filterVendors, categories } from "@/data/vendors";
-import { getVendors } from "@/data/store";
+import { useVendors } from "@/hooks/useVendors";
 import { haversineDistance } from "@/lib/distance";
 import { BusinessCategory, BusinessTag } from "@/types";
 
@@ -69,8 +69,10 @@ function DiscoverPage() {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [searchQuery, activeCategory, activeTags, selectedLocation, radius, router, pathname]);
 
+  const { vendors: allVendors } = useVendors();
+
   const filteredVendors = useMemo(() => {
-    let results = [...getVendors()];
+    let results = [...allVendors];
     if (selectedLocation) {
       results = results.filter((v) => {
         const dist = haversineDistance(selectedLocation.lat, selectedLocation.lng, v.lat, v.lng);
@@ -80,7 +82,7 @@ function DiscoverPage() {
     results = filterVendors(results, activeCategory, activeTags, searchQuery);
     results.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
     return results;
-  }, [selectedLocation, radius, activeCategory, activeTags, searchQuery]);
+  }, [allVendors, selectedLocation, radius, activeCategory, activeTags, searchQuery]);
 
 
 
