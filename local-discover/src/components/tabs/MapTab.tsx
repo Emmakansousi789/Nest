@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import MapView from "@/components/MapView";
 import { vendors } from "@/data/vendors";
+import { seedMarkets } from "@/data/markets";
 import { searchPlaces, type GeoResult } from "@/lib/geocode";
 import { haversineDistance } from "@/lib/distance";
 
@@ -22,7 +23,7 @@ export default function MapTab() {
   const [selectedLocation, setSelectedLocation] = useState<GeoResult | null>(null);
   const [locResults, setLocResults] = useState<GeoResult[]>([]);
   const [locSearching, setLocSearching] = useState(false);
-  const [markets, setMarkets] = useState<MarketHotspot[]>([]);
+  const [markets, setMarkets] = useState<MarketHotspot[]>(seedMarkets);
 
   useEffect(() => {
     if (locationQuery.trim().length < 2) {
@@ -38,7 +39,7 @@ export default function MapTab() {
     return () => clearTimeout(handle);
   }, [locationQuery]);
 
-  // Fetch active markets from the API
+  // Fetch active markets — falls back to seed data when API is unavailable (Capacitor)
   useEffect(() => {
     async function fetchMarkets() {
       try {

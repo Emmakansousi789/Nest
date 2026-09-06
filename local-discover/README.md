@@ -12,7 +12,7 @@ A hyper-local discovery platform that helps customers find small, independent bu
 - **Vendor Storefronts** — Dedicated profile pages with photo gallery, business story, hours, contact info, products, and reviews.
 - **Pop-Up Vendor Badges** — Vendors checked into live markets show a "Currently at: [Market Name]" badge on their profile.
 - **Reviews & Ratings** — Leave 1–5 star reviews with comments. Vendors can respond publicly.
-- **Favorites / Wishlists** — Save businesses to revisit later. Persisted via localStorage.
+- **Favorites / Wishlists** — Save businesses to revisit later. Stored in encrypted secure storage (Keychain on iOS, EncryptedSharedPreferences on Android) via `secure-storage.ts`.
 - **Share** — Share vendor listings via native Web Share API (iMessage, Instagram, WhatsApp) or copy to clipboard.
 - **Pull-to-Refresh** — Native-feeling pull-to-refresh on the discover feed, map, saved, and profile tabs.
 - **Photo Carousel** — Swipeable full-width photo gallery on vendor profiles with touch gestures.
@@ -28,12 +28,12 @@ A hyper-local discovery platform that helps customers find small, independent bu
 ### Platform
 - **Dual Persona** — Seamless shopper ↔ seller view switching from the Profile tab.
 - **Market Management** — Create and manage market events from the seller dashboard. Hotspot overlays render on the map in real-time.
-- **Dev Auth Bypass** — Toggle `DEV_AUTH_BYPASS` in `AuthContext.tsx` to skip login during development. Includes build-time assertion that throws if enabled in production.
 - **PWA Support** — Service worker for offline caching, push notification infrastructure, and installable web app.
 - **Real-Time Polling** — Reviews, messages, and favorites update automatically via tab-visibility-aware polling.
-- **Analytics** — Lightweight event tracking (vendor views, searches, shares, favorites) stored locally.
+- **Analytics** — Lightweight event tracking (vendor views, searches, shares, favorites). Fully consent-gated — zero events fire until the user grants tracking permission via the first-launch consent screen.
 - **Share** — Native Web Share API with clipboard fallback for viral distribution.
-- **Apple App Store Compliance** — Account deletion, content reporting, Privacy Policy, Terms of Use, and demo login for App Review.
+- **Apple App Store Compliance** — iOS PrivacyInfo.xcprivacy, ATT consent flow, Sign in with Apple, account deletion (in-app + web), content reporting, UGC moderation, Privacy Policy, Terms of Use, and demo login for App Review.
+- **Google Play Compliance** — Data Safety-ready, Android backup exclusion rules, network security config, account deletion URL (/delete-account).
 - **Security** — Zod validation on all API inputs, HTML escaping for XSS prevention, bcrypt password hashing (cost factor 14), rate limiting (Upstash Redis in production, in-memory fallback), CSRF token validation, secure cookie flags, and structured security event logging.
 
 ## Tech Stack
@@ -125,15 +125,15 @@ npm run test:watch  # Watch mode
 
 ### Demo Account
 
-Auth is currently bypassed in development via `DEV_AUTH_BYPASS` in `AuthContext.tsx`. When you're ready for real user testing, set it to `false`.
+Demo credentials for App Review are served via the `/api/auth/demo` endpoint, which reads from server-side environment variables (`DEMO_EMAIL` / `DEMO_PASSWORD`). No credentials are hardcoded in the client bundle.
 
-To create a demo user for App Review testing:
+To configure demo credentials:
 
 ```bash
-npx ts-node scripts/seed-demo.ts
+# In .env.local
+DEMO_EMAIL=demo@localdiscover.com
+DEMO_PASSWORD=YourSecureReviewPassword
 ```
-
-Credentials: `demo@localdiscover.com` / `DemoPass123!`
 
 ## Project Structure
 
@@ -150,9 +150,11 @@ src/
 │   ├── about/                # About page
 │   ├── privacy/              # Privacy Policy
 │   ├── terms/                # Terms of Use
+│   ├── accessibility/        # WCAG 2.1 AA accessibility statement
+│   ├── delete-account/       # Web-accessible account deletion page
 │   ├── saved/                # Saved favorites page
 │   ├── api/                  # API routes
-│   │   ├── auth/             # NextAuth + signup + account deletion
+│   │   ├── auth/             # NextAuth + signup + account deletion + demo credentials
 │   │   ├── vendors/          # Vendor CRUD + photo uploads + market check-in
 │   │   ├── markets/          # Market event management
 │   │   ├── geocode/          # Server-side geocoding proxy with caching
@@ -163,18 +165,20 @@ src/
 │   │   └── submit-vendor/    # Vendor self-registration
 │   └── not-found.tsx         # Custom 404
 ├── components/
-│   ├── AuthModal.tsx         # Sign in / Sign up modal
+│   ├── AuthModal.tsx         # Sign in / Sign up modal (Apple Sign In + email/password)
 │   ├── BusinessListingEditor.tsx # Listing editor with location mode toggle
 │   ├── CategoryIllustration.tsx # Category SVG illustrations
 │   ├── DirectionsButton.tsx  # Apple/Google Maps directions
-│   ├── FavoriteButton.tsx    # Heart toggle
+│   ├── BlockUserButton.tsx   # Block/unblock users
+│   ├── ConsentScreen.tsx     # First-launch data collection consent
+│   ├── FavoriteButton.tsx    # Heart toggle (encrypted storage)
 │   ├── FilterSheet.tsx       # Search filter bottom sheet
 │   ├── MapView.tsx           # Map container with loading
 │   ├── MapViewInner.tsx      # Leaflet map + market hotspot overlays
 │   ├── MessageButton.tsx     # Contact vendor
 │   ├── PhotoCarousel.tsx     # Swipeable photo gallery
 │   ├── PhotoManager.tsx      # Photo upload/reorder/delete
-│   ├── Providers.tsx         # NextAuth SessionProvider wrapper
+│   ├── Providers.tsx         # SessionProvider + consent gate + analytics init
 │   ├── MarketCreationForm.tsx # Create market events from seller dashboard
 │   ├── PullToRefresh.tsx     # Pull-to-refresh gesture
 │   ├── ReviewForm.tsx        # Review submission form
@@ -190,29 +194,36 @@ src/
 │   ├── VendorProfileClient.tsx # Vendor storefront client + market badge
 │   ├── WriteReviewButton.tsx # Review trigger button
 │   ├── icons.tsx             # Shared SVG icons
+│   ├── MarketDetailClient.tsx # Market detail client component
+│   ├── PhotoManager.tsx      # Photo upload/reorder/delete
+│   ├── ServiceWorkerRegister.tsx # PWA service worker registration
+│   ├── ShareButton.tsx       # Share vendor via Web Share API / clipboard
 │   └── tabs/
 │       ├── MapTab.tsx        # Map tab with geocoding
 │       ├── SavedTab.tsx      # Saved/favorited businesses
 │       └── ProfileTab.tsx    # Profile + settings + auth
 ├── contexts/
-│   └── AuthContext.tsx        # Auth state + dev bypass
+│   └── AuthContext.tsx        # Auth state (real API only)
 ├── __tests__/
 │   ├── api.test.ts           # API & data integrity tests
 │   └── store.test.ts         # Vitest smoke tests
 ├── data/
 │   ├── vendors.ts            # Seed vendor data
 │   ├── reviews.ts            # Seed review data
+│   ├── markets.ts            # Seed market data (Capacitor offline)
 │   └── store.ts              # Bridge data layer (Prisma + localStorage fallback)
 ├── lib/
 │   ├── auth.ts               # NextAuth config + credentials provider
 │   ├── distance.ts           # Haversine distance calc
-│   ├── analytics.ts          # Event tracking (localStorage)
-│   ├── favorites.ts          # localStorage favorites
+│   ├── analytics.ts          # Consent-gated event tracking
+│   ├── favorites.ts          # Encrypted favorites (secure-storage)
 │   ├── geocode.ts            # Nominatim geocoding
+│   ├── moderation.ts         # UGC content filtering (profanity, spam)
 │   ├── notifications.ts      # Push notification registration
 │   ├── realtime.ts           # Tab-visibility-aware polling hook
 │   ├── share.ts              # Web Share API + clipboard fallback
 │   ├── storage.ts            # Supabase Storage for photo uploads
+│   ├── secure-storage.ts     # Keychain/EncryptedSharedPrefs abstraction
 │   ├── prisma.ts             # Prisma client singleton
 │   ├── rate-limit.ts         # Upstash Redis / in-memory rate limiting
 │   ├── security-logger.ts    # Security event logging
@@ -301,7 +312,9 @@ src/
 - **Atomic Transactions** — Market check-in/out wrapped in `prisma.$transaction()` to prevent race conditions
 - **Security Event Logging** — Auth failures, signups, rate limit hits, CSRF blocks, IDOR attempts logged with IP and path
 - **Photo Upload Sanitization** — Alt text and captions sanitized (HTML entities escaped, length-capped) before storage
-- **Production Safety** — `DEV_AUTH_BYPASS` has build-time assertion; Prisma errors logged without leaking connection strings
+- **Content Moderation** — Profanity/harassment filtering on reviews and messages via `moderation.ts`. Contact info blocked in reviews.
+- **User Blocking** — Block/unblock users via encrypted storage. Blocked users' content is hidden.
+- **Production Safety** — No debug features in codebase; Prisma errors logged without leaking connection strings
 - **Account Lockout** — Not yet implemented; revisit when auth is fully enabled for production
 
 ## Deployment
@@ -313,7 +326,7 @@ Before deploying to production, complete these steps:
 1. **Create Supabase Storage bucket** — In the Supabase dashboard, create a storage bucket named `vendor-photos` (public read access). Set the env vars listed above.
 2. **Create Upstash Redis instance** — Free tier at [upstash.com](https://upstash.com). Set the env vars listed above.
 3. **Seed the database** — Run `npm run seed` against your production PostgreSQL to populate the 12 demo vendors and 25 reviews.
-4. **Disable DEV_AUTH_BYPASS** — Set `DEV_AUTH_BYPASS = false` in `src/contexts/AuthContext.tsx`.
+4. **Configure demo credentials** — Set `DEMO_EMAIL` and `DEMO_PASSWORD` in `.env.local` (served via `/api/auth/demo` endpoint).
 5. **Generate NEXTAUTH_SECRET** — `openssl rand -base64 32`
 6. **Set NEXTAUTH_URL** — Your production domain (e.g., `https://localdiscover.app`)
 
@@ -334,15 +347,37 @@ Before deploying to production, complete these steps:
 - **Account Lockout** — Not yet implemented in app code. When auth is fully enabled for production, add lockout after N failed attempts.
 - **Photo Storage** — Supabase Storage integration is implemented (`src/lib/storage.ts`). Create a `vendor-photos` bucket in the Supabase dashboard. Falls back to local `public/uploads/` if not configured.
 
-## Apple App Store Compliance
+## Apple App Store & Google Play Compliance
 
-- ✅ Account deletion with confirmation flow
-- ✅ Content reporting (reviews, vendors)
+- ✅ iOS PrivacyInfo.xcprivacy (data types, required-reason APIs, tracking domains)
+- ✅ ATT consent flow — gating all analytics before user permission
+- ✅ Sign in with Apple (equally prominent alongside email/password)
+- ✅ Account deletion — in-app flow + web page at `/delete-account`
+- ✅ Content reporting (reviews, vendors) via `/api/reports`
+- ✅ UGC moderation — profanity/harassment filtering on reviews and messages
+- ✅ User blocking via encrypted storage
 - ✅ Privacy Policy page (`/privacy`)
 - ✅ Terms of Use page (`/terms`)
-- ✅ Legal links in signup flow
-- ✅ Demo login for App Review
+- ✅ Accessibility statement page (`/accessibility`) — WCAG 2.1 AA
+- ✅ Reduced motion support (`prefers-reduced-motion`)
+- ✅ Demo login for App Review (credentials via server-side env vars)
 - ✅ Contact developer in Settings
+- ✅ Android backup exclusion rules (dataExtractionRules + fullBackupContent)
+- ✅ Android network security config (cleartext disabled)
+- ✅ Encrypted storage for user-linked data (Keychain / EncryptedSharedPreferences)
+- ✅ Consent screen before any data collection
+
+### Still Required in App Store Connect / Play Console (Not Code)
+
+These items cannot be completed from the codebase — they require manual action in the store dashboards:
+
+1. **DSA Trader Status** — Declare trader/developer identity in App Store Connect for EU distribution (required since Feb 2025)
+2. **Privacy Nutrition Labels** — Fill out App Privacy section in App Store Connect: Data Linked to User (name, email, location), Usage Data (analytics), Contact Info
+3. **App Store Review Notes** — Document: demo account flow (via `/api/auth/demo`), app purpose (local business directory), no IAP, geocoding via Nominatim, shopper/seller persona toggle
+4. **Data Safety Form** — Complete Google Play Data Safety declaration matching runtime data collection
+5. **Account Deletion URL** — Declare `/delete-account` in Play Console Data Safety settings
+6. **Age Rating** — Complete IARC content rating questionnaire in both stores
+7. **App Icon** — Replace placeholder icon with proper 1024×1024 (iOS) / 512×512 (Android) app icon
 
 ## Available Scripts
 
@@ -354,6 +389,10 @@ Before deploying to production, complete these steps:
 | `npm run seed` | Seed database with demo vendors + reviews |
 | `npm test` | Run test suite |
 | `npm run test:watch` | Run tests in watch mode |
+| `npm run build:app` | Build static export for Capacitor native app |
+| `npm run cap:sync` | Sync web assets to iOS + Android projects |
+| `npm run cap:ios` | Open iOS project in Xcode |
+| `npm run cap:android` | Open Android project in Android Studio |
 
 ## Post-Testing Pre-Launch Reminders
 

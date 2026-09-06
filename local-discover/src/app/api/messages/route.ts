@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { sendMessageSchema, respondMessageSchema } from "@/lib/validations";
 import { prisma } from "@/lib/prisma";
+import { moderateMessage } from "@/lib/moderation";
 
 // POST /api/messages — Send a message to a vendor
 export async function POST(req: Request) {
@@ -33,6 +34,15 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "Forbidden: Cannot send message as another user" },
         { status: 403 }
+      );
+    }
+
+    // Content moderation — filter profanity and harassment
+    const moderation = moderateMessage(text);
+    if (!moderation.clean) {
+      return NextResponse.json(
+        { error: moderation.blockedReason },
+        { status: 400 }
       );
     }
 
