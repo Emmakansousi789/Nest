@@ -241,7 +241,7 @@ export default function ProfileTab() {
 
   useEffect(() => {
     setMounted(true);
-    setSavedIds(getFavorites());
+    getFavorites().then(setSavedIds);
   }, []);
 
   useEffect(() => {
@@ -253,7 +253,7 @@ export default function ProfileTab() {
 
   const handleRefresh = useCallback(() => {
     return new Promise<void>((resolve) => {
-      setSavedIds(getFavorites());
+      getFavorites().then(setSavedIds);
       setTimeout(resolve, 500);
     });
   }, []);

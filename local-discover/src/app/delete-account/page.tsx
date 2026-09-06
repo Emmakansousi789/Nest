@@ -1,22 +1,40 @@
-import Link from "next/link";
-import type { Metadata } from "next";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Delete Account — Local Discover",
-  description: "Request permanent deletion of your Local Discover account and all associated data.",
-};
+import Link from "next/link";
+import { useState } from "react";
 
 /**
  * Web-accessible account deletion page.
  * Users can request account deletion without opening the app.
- * This URL should be declared in:
- * - Google Play Console (Data Safety → Account deletion URL)
- * - App Store Connect (Notes for Review)
- * - The app's Privacy Policy
- *
- * For the actual deletion, users submit their email and we process it server-side.
+ * This URL should be declared in Google Play Console Data Safety
+ * and App Store Connect Notes for Review.
  */
 export default function DeleteAccountPage() {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "request-deletion", email }),
+      });
+
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-linen">
       <div className="sticky top-0 z-40 bg-cream/80 backdrop-blur-md border-b border-parchment">
@@ -45,102 +63,73 @@ export default function DeleteAccountPage() {
               What gets deleted
             </h2>
             <ul className="space-y-2 text-sm text-stone">
-              <li className="flex items-start gap-2">
-                <svg className="w-4 h-4 text-terracotta mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                Your account and profile information
-              </li>
-              <li className="flex items-start gap-2">
-                <svg className="w-4 h-4 text-terracotta mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                All reviews you have posted
-              </li>
-              <li className="flex items-start gap-2">
-                <svg className="w-4 h-4 text-terracotta mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                All messages you have sent or received
-              </li>
-              <li className="flex items-start gap-2">
-                <svg className="w-4 h-4 text-terracotta mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                Your favorites and saved businesses
-              </li>
-              <li className="flex items-start gap-2">
-                <svg className="w-4 h-4 text-terracotta mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                </svg>
-                Any business listings you own
-              </li>
+              {[
+                "Your account and profile information",
+                "All reviews you have posted",
+                "All messages you have sent or received",
+                "Your favorites and saved businesses",
+                "Any business listings you own",
+              ].map((item) => (
+                <li key={item} className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-terracotta mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                  </svg>
+                  {item}
+                </li>
+              ))}
             </ul>
           </section>
 
-          {/* Deletion form */}
-          <section className="bg-cream rounded-2xl border border-parchment p-6">
-            <h2 className="text-lg font-semibold text-charcoal mb-3">
-              Request account deletion
-            </h2>
-            <p className="text-sm text-stone mb-4">
-              Enter the email address associated with your account. We will send a
-              confirmation link to verify your identity before processing the deletion.
-            </p>
+          {submitted ? (
+            <section className="bg-cream rounded-2xl border border-parchment p-6 text-center">
+              <svg className="w-12 h-12 mx-auto mb-3 text-sage" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h2 className="text-lg font-semibold text-charcoal mb-2">Request received</h2>
+              <p className="text-sm text-stone">
+                If an account exists with that email, you will receive a
+                confirmation link shortly. Check your inbox.
+              </p>
+            </section>
+          ) : (
+            <section className="bg-cream rounded-2xl border border-parchment p-6">
+              <h2 className="text-lg font-semibold text-charcoal mb-3">
+                Request account deletion
+              </h2>
+              <p className="text-sm text-stone mb-4">
+                Enter the email address associated with your account. We will send a
+                confirmation link to verify your identity before processing the deletion.
+              </p>
 
-            <form
-              onSubmit={async (e) => {
-                e.preventDefault();
-                const form = e.target as HTMLFormElement;
-                const emailInput = form.elements.namedItem("email") as HTMLInputElement;
-                const email = emailInput.value.trim();
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="email" className="text-xs font-semibold text-stone uppercase tracking-wider mb-1.5 block">
+                    Email address
+                  </label>
+                  <input
+                    id="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    className="w-full px-4 py-2.5 bg-ecru border border-parchment rounded-xl text-sm text-charcoal placeholder-clay focus:border-terracotta focus:outline-none transition-colors"
+                  />
+                </div>
 
-                if (!email) return;
+                {error && (
+                  <p className="text-sm text-red-600">{error}</p>
+                )}
 
-                try {
-                  const res = await fetch("/api/auth/account", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      action: "request-deletion",
-                      email,
-                    }),
-                  });
-
-                  if (res.ok) {
-                    alert("If an account exists with that email, you will receive a deletion confirmation link shortly.");
-                    emailInput.value = "";
-                  } else {
-                    alert("Something went wrong. Please try again or contact support.");
-                  }
-                } catch {
-                  alert("Something went wrong. Please try again.");
-                }
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label htmlFor="email" className="text-xs font-semibold text-stone uppercase tracking-wider mb-1.5 block">
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  placeholder="you@example.com"
-                  className="w-full px-4 py-2.5 bg-ecru border border-parchment rounded-xl text-sm text-charcoal placeholder-clay focus:border-terracotta focus:outline-none transition-colors"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-3 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors"
-              >
-                Request Account Deletion
-              </button>
-            </form>
-          </section>
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors"
+                >
+                  Request Account Deletion
+                </button>
+              </form>
+            </section>
+          )}
 
           {/* Help */}
           <section className="text-center text-sm text-stone space-y-1">

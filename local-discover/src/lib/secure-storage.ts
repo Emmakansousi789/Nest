@@ -9,18 +9,18 @@
 
 import { Capacitor } from "@capacitor/core";
 
-let secureStorage: Awaited<ReturnType<typeof import("@aparajita/capacitor-secure-storage").SecureStorage.clear>> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let secureStoragePlugin: any = null;
 let storageReady = false;
 
 async function getSecureStorage() {
-  if (storageReady) return secureStorage;
+  if (storageReady) return secureStoragePlugin;
   try {
-    const { SecureStorage } = await import("@aparajita/capacitor-secure-storage");
-    secureStorage = SecureStorage;
+    const mod = await import("@aparajita/capacitor-secure-storage");
+    secureStoragePlugin = mod.SecureStorage;
     storageReady = true;
-    return secureStorage;
+    return secureStoragePlugin;
   } catch {
-    // Plugin not available (web or not installed) — fall back to localStorage
     storageReady = true;
     return null;
   }
@@ -39,7 +39,6 @@ export async function secureSet(key: string, value: string): Promise<void> {
       return;
     }
   }
-  // Web fallback
   if (typeof window !== "undefined") {
     localStorage.setItem(key, value);
   }
@@ -47,8 +46,6 @@ export async function secureSet(key: string, value: string): Promise<void> {
 
 /**
  * Retrieve a value securely.
- * On native: reads from Keychain/EncryptedSharedPreferences.
- * On web: localStorage fallback.
  */
 export async function secureGet(key: string): Promise<string | null> {
   if (Capacitor.isNativePlatform()) {
@@ -58,7 +55,6 @@ export async function secureGet(key: string): Promise<string | null> {
       return result ?? null;
     }
   }
-  // Web fallback
   if (typeof window !== "undefined") {
     return localStorage.getItem(key);
   }
@@ -95,24 +91,4 @@ export async function secureClear(): Promise<void> {
   if (typeof window !== "undefined") {
     localStorage.clear();
   }
-}
-
-/**
- * Synchronous localStorage read for non-sensitive data that must be
- * available immediately on mount (consent shown flag, etc.).
- * Use secureGet/secureSet for anything user-linked or identity-tied.
- */
-export function syncGet(key: string): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem(key);
-}
-
-export function syncSet(key: string, value: string): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(key, value);
-}
-
-export function syncRemove(key: string): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(key);
 }

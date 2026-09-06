@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { signInWithApple } from "@capawesome/capacitor-apple-sign-in";
+import { AppleSignIn, SignInScope } from "@capawesome/capacitor-apple-sign-in";
 import { Capacitor } from "@capacitor/core";
 
 interface AuthModalProps {
@@ -143,16 +143,15 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: A
                   setError("");
                   try {
                     if (Capacitor.isNativePlatform()) {
-                      const result = await signInWithApple({
-                        clientId: "app.localdiscover.mobile",
-                        scopes: "name email",
+                      const result = await AppleSignIn.signIn({
+                        scopes: [SignInScope.Email, SignInScope.FullName],
                       });
                       // On native, send the identity token to our auth endpoint
                       const res = await fetch("/api/auth/callback/credential", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                          token: result.response?.identityToken,
+                          token: result.idToken,
                           provider: "apple",
                         }),
                       });
