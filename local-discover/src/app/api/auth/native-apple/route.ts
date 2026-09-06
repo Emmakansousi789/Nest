@@ -61,8 +61,15 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Use NextAuth's JWT encoder to create a session token
+    // Use NextAuth's JWT encoder to create a session token.
+    // CRITICAL: NextAuth uses the session cookie name as the HKDF salt
+    // when encoding/decoding JWTs. We must match exactly what the session
+    // handler expects, or the token won't decrypt.
     const { encode } = await import("next-auth/jwt");
+    const isProduction = process.env.NODE_ENV === "production";
+    const sessionCookieName = isProduction
+      ? "__Secure-next-auth.session-token"
+      : "next-auth.session-token";
 
     const sessionToken = await encode({
       token: {
@@ -72,15 +79,12 @@ export async function POST(req: NextRequest) {
         role: user.role,
       },
       secret: process.env.NEXTAUTH_SECRET!,
-      salt: process.env.NEXTAUTH_SECRET!.slice(0, 16),
+      salt: sessionCookieName,
       maxAge: 30 * 24 * 60 * 60, // 30 days
     });
 
     // Set the session cookie in the response
-    const isProduction = process.env.NODE_ENV === "production";
-    const cookieName = isProduction
-      ? "__Secure-next-auth.session-token"
-      : "next-auth.session-token";
+    const cookieName = sessionCookieName;
 
     const response = NextResponse.json({
       success: true,
