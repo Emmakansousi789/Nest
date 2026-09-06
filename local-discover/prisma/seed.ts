@@ -85,12 +85,14 @@ async function main() {
       where: { id: vendor.id },
       update: {
         ...rest,
+        ownerId: undefined,
         joinedDate: joinedDateObj,
         hours: rest.hours as unknown as Record<string, unknown>,
         products: products as unknown as Record<string, unknown>[],
       },
       create: {
         ...rest,
+        ownerId: undefined,
         joinedDate: joinedDateObj,
         hours: rest.hours as unknown as Record<string, unknown>,
         products: products as unknown as Record<string, unknown>[],
