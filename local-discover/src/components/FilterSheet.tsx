@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { searchLocations } from "@/data/locations";
+import { useState, useEffect } from "react";
+import { searchPlaces, type GeoResult } from "@/lib/geocode";
 import { categories, allTags } from "@/data/vendors";
 import { BusinessCategory, BusinessTag } from "@/types";
 
@@ -46,7 +46,22 @@ export default function FilterSheet({
   hasActiveFilters,
 }: FilterSheetProps) {
   const [locQuery, setLocQuery] = useState(locationQuery);
-  const locResults = locQuery.length >= 2 ? searchLocations(locQuery).slice(0, 5) : [];
+  const [locResults, setLocResults] = useState<GeoResult[]>([]);
+  const [locSearching, setLocSearching] = useState(false);
+
+  useEffect(() => {
+    if (locQuery.trim().length < 2) {
+      setLocResults([]);
+      return;
+    }
+    setLocSearching(true);
+    const handle = setTimeout(async () => {
+      const results = await searchPlaces(locQuery);
+      setLocResults(results);
+      setLocSearching(false);
+    }, 350);
+    return () => clearTimeout(handle);
+  }, [locQuery]);
 
   if (!isOpen) return null;
 
@@ -80,26 +95,32 @@ export default function FilterSheet({
                 setLocQuery(e.target.value);
                 onLocationQueryChange(e.target.value);
               }}
-              placeholder="Search city or state..."
+              placeholder="Search city, county, or state..."
               className="input-field"
             />
-            {locResults.length > 0 && (
+            {locSearching && (
+              <div className="mt-2 text-sm text-clay px-1">Searching…</div>
+            )}
+            {!locSearching && locResults.length > 0 && (
               <div className="mt-2 border border-parchment rounded-xl overflow-hidden">
                 {locResults.map((loc) => (
                   <button
                     key={`${loc.name}-${loc.state}`}
                     onClick={() => {
                       onLocationSelect(loc);
-                      setLocQuery(`${loc.name}, ${loc.state}`);
+                      setLocQuery(loc.state ? `${loc.name}, ${loc.state}` : loc.name);
                     }}
                     className="w-full text-left px-4 py-2.5 hover:bg-ecru active:bg-parchment transition-colors text-sm flex items-center gap-2 border-b border-parchment last:border-0 pressable"
                   >
                     <span className="text-stone text-xs">→</span>
                     <span className="font-medium text-charcoal">{loc.name}</span>
-                    <span className="text-clay">, {loc.state}</span>
+                    {loc.state && <span className="text-clay">, {loc.state}</span>}
                   </button>
                 ))}
               </div>
+            )}
+            {!locSearching && locQuery.length >= 2 && locResults.length === 0 && (
+              <div className="mt-2 text-sm text-clay px-1">No locations found — try a different spelling</div>
             )}
 
             {/* Radius */}

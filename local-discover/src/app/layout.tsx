@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Newsreader, Plus_Jakarta_Sans } from "next/font/google";
 import Providers from "@/components/Providers";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
 const newsreader = Newsreader({
@@ -52,6 +53,10 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body className="min-h-full flex flex-col bg-linen text-charcoal font-sans">
+        <ServiceWorkerRegister />
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-charcoal focus:text-cream focus:rounded-xl focus:text-sm">
+          Skip to content
+        </a>
         <Providers>{children}</Providers>
       </body>
     </html>

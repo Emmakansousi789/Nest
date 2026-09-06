@@ -70,8 +70,33 @@ export interface Vendor {
   products: Product[];
   featured: boolean;
   verified: boolean;
+  isPopUp?: boolean; // pop-up / market vendor mode
+  currentMarketId?: string | null; // currently checked-in market
   joinedDate: string;
-  ownerId?: string; // user id of the business owner
+  ownerId?: string;
+  activeCheckIn?: MarketCheckIn | null; // current market check-in
+}
+
+export interface Market {
+  id: string;
+  name: string;
+  description?: string;
+  lat: number;
+  lng: number;
+  radius: number; // meters
+  startTime?: string;
+  endTime?: string;
+  activeDate: string;
+  active: boolean;
+}
+
+export interface MarketCheckIn {
+  id: string;
+  vendorId: string;
+  marketId: string;
+  market?: Market;
+  checkedInAt: string;
+  checkedOutAt?: string;
 }
 
 export interface OperatingHours {

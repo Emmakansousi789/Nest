@@ -4,12 +4,16 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getVendorByOwner, updateVendor } from "@/data/store";
 import { categories, allTags } from "@/data/vendors";
-import { Vendor, BusinessCategory, BusinessTag } from "@/types";
+import { Vendor, VendorPhoto } from "@/types";
+import PhotoManager from "./PhotoManager";
 
 export default function BusinessListingEditor() {
   const { user } = useAuth();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [saved, setSaved] = useState(false);
+
+  const [availableMarkets, setAvailableMarkets] = useState<{ id: string; name: string; date: string }[]>([]);
+  const [checkingIn, setCheckingIn] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -17,6 +21,26 @@ export default function BusinessListingEditor() {
       if (v) setVendor({ ...v });
     }
   }, [user]);
+
+  // Fetch available markets for the check-in dropdown
+  useEffect(() => {
+    async function fetchMarkets() {
+      try {
+        const res = await fetch("/api/markets");
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableMarkets(
+            (data.markets || []).map((m: Record<string, unknown>) => ({
+              id: m.id as string,
+              name: m.name as string,
+              date: m.activeDate as string,
+            }))
+          );
+        }
+      } catch { /* optional */ }
+    }
+    fetchMarkets();
+  }, []);
 
   if (!vendor) {
     return (
@@ -124,6 +148,54 @@ export default function BusinessListingEditor() {
         </div>
       </section>
 
+      {/* Location Mode */}
+      <section className="bg-cream rounded-2xl border border-parchment p-5 space-y-4">
+        <h3 className="font-semibold text-charcoal text-sm">Location Mode</h3>
+        <div className="flex gap-3">
+          <button
+            onClick={() => update("isPopUp", false)}
+            className={`flex-1 p-4 rounded-xl border-2 transition-all ${
+              !vendor.isPopUp ? "border-terracotta bg-terracotta/5" : "border-parchment bg-white hover:border-clay"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                !vendor.isPopUp ? "bg-terracotta text-white" : "bg-ecru text-stone"
+              }`}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <p className="font-medium text-charcoal text-sm">Permanent Storefront</p>
+                <p className="text-xs text-stone">Fixed business location</p>
+              </div>
+            </div>
+          </button>
+          <button
+            onClick={() => update("isPopUp", true)}
+            className={`flex-1 p-4 rounded-xl border-2 transition-all ${
+              vendor.isPopUp ? "border-terracotta bg-terracotta/5" : "border-parchment bg-white hover:border-clay"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                vendor.isPopUp ? "bg-terracotta text-white" : "bg-ecru text-stone"
+              }`}>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <p className="font-medium text-charcoal text-sm">Pop-Up / Market</p>
+                <p className="text-xs text-stone">Vendor at events</p>
+              </div>
+            </div>
+          </button>
+        </div>
+      </section>
+
       {/* Location & Contact */}
       <section className="bg-cream rounded-2xl border border-parchment p-5 space-y-4">
         <h3 className="font-semibold text-charcoal text-sm">Location & Contact</h3>
@@ -197,6 +269,83 @@ export default function BusinessListingEditor() {
             </div>
           );
         })}
+      </section>
+
+      {/* Market Check-In (only shown for pop-up vendors) */}
+      {vendor.isPopUp && (
+        <section className="bg-cream rounded-2xl border border-parchment p-5 space-y-4">
+          <h3 className="font-semibold text-charcoal text-sm">Market Check-In</h3>
+          <p className="text-xs text-stone">
+            Check in to a live market to broadcast your temporary location on the map.
+          </p>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold text-stone uppercase tracking-wider block">Active Market</label>
+            <select
+              value={vendor.currentMarketId || ""}
+              onChange={async (e) => {
+                const marketId = e.target.value || null;
+                setCheckingIn(true);
+                try {
+                  if (marketId) {
+                    // Check in via API
+                    const res = await fetch(`/api/vendors/${vendor.id}/market-checkin`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ marketId }),
+                    });
+                    if (res.ok) {
+                      update("currentMarketId", marketId);
+                      // Also update coordinates from the market
+                      const market = availableMarkets.find((m) => m.id === marketId);
+                      if (market) {
+                        update("isPopUp", true);
+                      }
+                    }
+                  } else {
+                    // Check out via API
+                    const res = await fetch(`/api/vendors/${vendor.id}/market-checkin`, {
+                      method: "DELETE",
+                    });
+                    if (res.ok) {
+                      update("currentMarketId", null);
+                      update("isPopUp", false);
+                    }
+                  }
+                } catch { /* network error — silently fail */ }
+                setCheckingIn(false);
+              }}
+              disabled={checkingIn}
+              className="w-full px-4 py-2.5 input-field"
+            >
+              <option value="">Not checked in</option>
+              {availableMarkets.map((m) => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
+            {checkingIn && (
+              <p className="text-xs text-clay">Updating location…</p>
+            )}
+          </div>
+          {vendor.currentMarketId && (
+            <div className="flex items-center gap-2 p-3 bg-sage/10 rounded-xl">
+              <div className="w-2 h-2 bg-sage rounded-full animate-pulse" />
+              <span className="text-sm text-sage font-medium">Currently broadcasting at market</span>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Photos */}
+      <section className="bg-cream rounded-2xl border border-parchment p-5 space-y-3">
+        <h3 className="font-semibold text-charcoal text-sm">Photos ({vendor.photos.length})</h3>
+        <p className="text-xs text-stone">
+          Upload photos of your business, storefront, or products. First photo appears as the cover.
+        </p>
+        <PhotoManager
+          vendorId={vendor.id}
+          photos={vendor.photos}
+          onPhotosChange={(photos: VendorPhoto[]) => update("photos", photos)}
+        />
       </section>
 
       {/* Products */}

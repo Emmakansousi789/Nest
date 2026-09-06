@@ -5,7 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getVendorByOwner, getReviewsForVendor, getMessagesForVendor, addReviewResponse, addMessageResponse, getUnreadMessageCount } from "@/data/store";
 import StarRating from "./StarRating";
 import BusinessListingEditor from "./BusinessListingEditor";
-import { ChatBubbleOutline, StarOutline, StorefrontOutline, CheckCircleOutline } from "./icons";
+import MarketCreationForm from "./MarketCreationForm";
+import { ChatBubbleOutline, StarOutline, StorefrontOutline } from "./icons";
 import type { Vendor } from "@/types";
 import type { Review } from "@/data/reviews";
 import type { Message } from "@/types";
@@ -58,8 +59,20 @@ export default function SellerDashboard({ activeSellerTab, onSellerTabChange }: 
     }
   }, [vendor]);
 
-  // Auth disabled for testing — always show dashboard
-  // if (!user || user.role !== "business") { ... }
+  // Guard: only business owners can access the dashboard
+  if (!user || user.role !== "business") {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-12 text-center">
+        <div className="w-14 h-14 mx-auto rounded-2xl bg-stone/10 flex items-center justify-center mb-3">
+          <StorefrontOutline size={28} className="text-stone" />
+        </div>
+        <h3 className="text-lg font-semibold text-charcoal mb-2">Business account required</h3>
+        <p className="text-sm text-stone max-w-sm mx-auto">
+          Sign in with a business account to access the seller dashboard.
+        </p>
+      </div>
+    );
+  }
 
   const tabs: { id: BizTab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: "dashboard", label: "Dashboard", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> },
@@ -98,7 +111,7 @@ export default function SellerDashboard({ activeSellerTab, onSellerTabChange }: 
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-4 pb-24 space-y-4 overflow-y-auto">
+    <div className="max-w-4xl mx-auto px-4 py-4 pb-28 space-y-4 overflow-y-auto">
       {/* Welcome + Switch back */}
       <div className="flex items-center justify-between">
         <div>
@@ -112,20 +125,20 @@ export default function SellerDashboard({ activeSellerTab, onSellerTabChange }: 
         </button>
       </div>
 
-      {/* Tab bar — grid, no scroll */}
-      <div className="grid grid-cols-4 gap-1 bg-ecru rounded-xl p-1">
+      {/* Tab bar — icons + labels always visible */}
+      <div className="grid grid-cols-4 gap-2 bg-ecru rounded-2xl p-1.5">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => switchTab(tab.id)}
-            className={`relative flex items-center justify-center gap-1 px-1 sm:px-2 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 pressable focus-ring ${
+            className={`relative flex flex-col items-center justify-center gap-1.5 px-2 py-3 rounded-xl text-xs font-medium transition-all duration-200 pressable focus-ring ${
               activeTab === tab.id ? "bg-cream text-charcoal shadow-sm" : "text-stone hover:text-charcoal hover:bg-cream/50"
             }`}
           >
             {tab.icon}
-            <span className="hidden sm:inline">{tab.label}</span>
+            <span className="text-[11px] leading-none">{tab.label}</span>
             {tab.badge !== undefined && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-terracotta text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+              <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-terracotta text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                 {tab.badge}
               </span>
             )}
@@ -177,8 +190,10 @@ export default function SellerDashboard({ activeSellerTab, onSellerTabChange }: 
             </button>
           )}
 
+          <MarketCreationForm />
+
           <div className="bg-terracotta/5 rounded-2xl p-5 border border-terracotta/10">
-            <h3 className="font-semibold text-charcoal mb-2">💡 Tip of the Day</h3>
+            <h3 className="font-semibold text-charcoal mb-2">Tip of the Day</h3>
             <p className="text-sm text-stone leading-relaxed">
               Businesses that respond to reviews see 35% more customer engagement.
               Take a moment to thank your reviewers — it builds community trust.

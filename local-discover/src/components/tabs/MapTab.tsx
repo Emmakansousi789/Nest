@@ -1,36 +1,86 @@
 "use client";
 
-import { Suspense, useCallback } from "react";
+import { Suspense, useEffect, useState } from "react";
 import MapView from "@/components/MapView";
 import { vendors } from "@/data/vendors";
-import { searchLocations } from "@/data/locations";
-import { useState } from "react";
-import PullToRefresh from "@/components/PullToRefresh";
+import { searchPlaces, type GeoResult } from "@/lib/geocode";
+import { haversineDistance } from "@/lib/distance";
+
+const DEFAULT_RADIUS_MILES = 25;
+
+interface MarketHotspot {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  radius: number;
+  checkInCount?: number;
+}
 
 export default function MapTab() {
   const [locationQuery, setLocationQuery] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState<{
-    lat: number;
-    lng: number;
-    name: string;
-  } | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<GeoResult | null>(null);
+  const [locResults, setLocResults] = useState<GeoResult[]>([]);
+  const [locSearching, setLocSearching] = useState(false);
+  const [markets, setMarkets] = useState<MarketHotspot[]>([]);
 
-  const suggestions =
-    locationQuery.length >= 2 ? searchLocations(locationQuery) : [];
+  useEffect(() => {
+    if (locationQuery.trim().length < 2) {
+      setLocResults([]);
+      return;
+    }
+    setLocSearching(true);
+    const handle = setTimeout(async () => {
+      const results = await searchPlaces(locationQuery);
+      setLocResults(results);
+      setLocSearching(false);
+    }, 350);
+    return () => clearTimeout(handle);
+  }, [locationQuery]);
+
+  // Fetch active markets from the API
+  useEffect(() => {
+    async function fetchMarkets() {
+      try {
+        const params = selectedLocation
+          ? `?lat=${selectedLocation.lat}&lng=${selectedLocation.lng}&radius=${DEFAULT_RADIUS_MILES}`
+          : "";
+        const res = await fetch(`/api/markets${params}`);
+        if (res.ok) {
+          const data = await res.json();
+          setMarkets(
+            (data.markets || []).map((m: Record<string, unknown>) => ({
+              id: m.id as string,
+              name: m.name as string,
+              lat: m.lat as number,
+              lng: m.lng as number,
+              radius: m.radius as number,
+              checkInCount: Array.isArray(m.checkIns) ? (m.checkIns as unknown[]).length : 0,
+            }))
+          );
+        }
+      } catch {
+        // Markets are optional — map still works without them
+      }
+    }
+    fetchMarkets();
+  }, [selectedLocation]);
 
   const center: [number, number] = selectedLocation
     ? [selectedLocation.lat, selectedLocation.lng]
     : [33.749, -84.388];
 
-  const handleRefresh = useCallback(() => {
-    return new Promise<void>((resolve) => {
-      setTimeout(resolve, 800);
-    });
-  }, []);
+  const nearbyVendors = selectedLocation
+    ? vendors.filter(
+        (v) =>
+          haversineDistance(selectedLocation.lat, selectedLocation.lng, v.lat, v.lng) <=
+          DEFAULT_RADIUS_MILES
+      )
+    : vendors;
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} className="flex flex-col h-full pb-16">
-      {/* Location search */}
+    <div className="flex flex-col h-full pb-16">
+      {/* Search bar */}
       <div className="px-4 py-3 border-b border-parchment bg-cream/60 backdrop-blur-sm">
         <div className="relative">
           <svg
@@ -54,37 +104,60 @@ export default function MapTab() {
             className="input-field pl-10"
           />
         </div>
-        {suggestions.length > 0 && (
+        {locSearching && (
+          <div className="mt-2 text-sm text-clay px-1">Searching…</div>
+        )}
+        {!locSearching && locResults.length > 0 && (
           <div className="mt-2 bg-cream rounded-xl border border-parchment shadow-sm overflow-hidden">
-            {suggestions.map((loc) => (
+            {locResults.map((loc) => (
               <button
                 key={`${loc.name}-${loc.state}`}
                 onClick={() => {
                   setSelectedLocation(loc);
-                  setLocationQuery(`${loc.name}, ${loc.state}`);
+                  setLocationQuery(loc.state ? `${loc.name}, ${loc.state}` : loc.name);
+                  setLocResults([]);
                 }}
                 className="w-full text-left px-4 py-2.5 hover:bg-ecru transition-colors text-sm border-b border-parchment last:border-0"
               >
                 <span className="font-medium text-charcoal">{loc.name}</span>
-                <span className="text-stone ml-1">, {loc.state}</span>
+                {loc.state && <span className="text-stone ml-1">, {loc.state}</span>}
               </button>
             ))}
           </div>
         )}
+        {!locSearching && locationQuery.length >= 2 && locResults.length === 0 && (
+          <div className="mt-2 text-sm text-clay px-1">No locations found — try a different spelling</div>
+        )}
       </div>
 
       {/* Map */}
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 relative">
         <Suspense
           fallback={
-            <div className="w-full h-full bg-ecru animate-pulse flex items-center justify-center rounded-2xl">
+            <div className="w-full h-full bg-ecru animate-pulse flex items-center justify-center">
               <span className="text-stone text-sm">Loading map…</span>
             </div>
           }
         >
-          <MapView vendors={vendors} center={center} zoom={selectedLocation ? 11 : 5} />
+          <MapView vendors={nearbyVendors} center={center} zoom={selectedLocation ? 11 : 5} markets={markets} />
         </Suspense>
+
+        {selectedLocation && nearbyVendors.length === 0 && (
+          <div className="absolute bottom-4 left-4 right-4 bg-cream/95 backdrop-blur-sm border border-parchment rounded-xl shadow-md px-4 py-2.5 flex items-center justify-between gap-3 z-[1000]">
+            <p className="text-sm text-charcoal">
+              <span className="font-medium">Nothing in {selectedLocation.name} yet.</span>{" "}
+              <span className="text-stone">Try another area.</span>
+            </p>
+          </div>
+        )}
+
+        {/* Business count badge */}
+        <div className="absolute bottom-4 left-4 z-[1000]">
+          <div className="bg-white px-3 py-1.5 rounded-full shadow-md border border-parchment">
+            <span className="text-xs font-medium text-charcoal">{nearbyVendors.length} businesses</span>
+          </div>
+        </div>
       </div>
-    </PullToRefresh>
+    </div>
   );
 }

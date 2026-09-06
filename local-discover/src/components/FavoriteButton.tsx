@@ -1,39 +1,55 @@
 "use client";
 
-import { getFavorites, toggleFavorite } from "@/lib/favorites";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface FavoriteButtonProps {
   vendorId: string;
-  size?: "sm" | "md";
 }
 
-export default function FavoriteButton({ vendorId, size = "sm" }: FavoriteButtonProps) {
-  const favorites = getFavorites();
-  const isFav = favorites.includes(vendorId);
+export default function FavoriteButton({ vendorId }: FavoriteButtonProps) {
+  const [isFav, setIsFav] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [animating, setAnimating] = useState(false);
-  const iconSize = size === "sm" ? "w-4 h-4" : "w-5 h-5";
+
+  useEffect(() => {
+    setMounted(true);
+    try {
+      const favorites = JSON.parse(localStorage.getItem("ld-favorites") || "[]");
+      setIsFav(favorites.includes(vendorId));
+    } catch {
+      setIsFav(false);
+    }
+  }, [vendorId]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setAnimating(true);
-    toggleFavorite(vendorId);
+    const next = !isFav;
+    setIsFav(next);
+    try {
+      const favorites = JSON.parse(localStorage.getItem("ld-favorites") || "[]");
+      const updated = next
+        ? [...favorites, vendorId]
+        : favorites.filter((id: string) => id !== vendorId);
+      localStorage.setItem("ld-favorites", JSON.stringify(updated));
+      window.dispatchEvent(new Event("favorites-changed"));
+    } catch { /* ignore */ }
     setTimeout(() => setAnimating(false), 300);
   };
 
   return (
     <button
       onClick={handleClick}
-      className={`w-full h-full flex items-center justify-center transition-transform duration-200 ${animating ? "scale-125" : "scale-100"}`}
+      className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${isFav ? "bg-terracotta/10" : "bg-white/80 backdrop-blur-sm shadow-sm hover:bg-white"}`}
       aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
     >
       <svg
-        className={iconSize}
-        fill={isFav ? "#C84B31" : "none"}
+        className={`w-5 h-5 transition-transform duration-200 ${animating ? "scale-125" : "scale-100"}`}
+        fill={mounted && isFav ? "#E31C5F" : "none"}
         viewBox="0 0 24 24"
-        stroke={isFav ? "#C84B31" : "#1C1917"}
-        strokeWidth={1.5}
+        stroke={mounted && isFav ? "#E31C5F" : "#222222"}
+        strokeWidth={2}
       >
         <path
           strokeLinecap="round"

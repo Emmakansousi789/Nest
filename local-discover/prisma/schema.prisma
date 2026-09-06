@@ -90,10 +90,12 @@ model Vendor {
   website     String?
   instagram   String?
   hours       Json           // OperatingHours object
-  photos      Json[]         // VendorPhoto[]
+  photos      VendorPhoto[]  // ordered gallery
   products    Json[]         // Product[]
   featured    Boolean        @default(false)
   verified    Boolean        @default(false)
+  isPopUp     Boolean        @default(false) // pop-up / market vendor mode
+  currentMarketId String?   // currently checked-in market
   joinedDate  DateTime       @default(now())
   ownerId     String?
 
@@ -101,6 +103,7 @@ model Vendor {
   reviews     Review[]
   messages    Message[]
   favorites   Favorite[]
+  checkIns    MarketCheckIn[]
 
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
@@ -109,6 +112,21 @@ model Vendor {
   @@index([state])
   @@index([category])
   @@index([lat, lng])
+}
+
+model VendorPhoto {
+  id        String   @id @default(cuid())
+  vendorId  String
+  url       String
+  alt       String   @default("")
+  caption   String?
+  order     Int      @default(0)
+
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([vendorId, order])
 }
 
 model Review {
@@ -162,4 +180,63 @@ model Favorite {
   @@unique([userId, vendorId])
   @@index([userId])
   @@index([vendorId])
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  reporterId  String
+  targetType  String       // "review" | "vendor" | "message"
+  targetId    String
+  reason      String       // "spam" | "offensive" | "inaccurate" | "other"
+  description String?
+  status      ReportStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+
+  @@index([targetType, targetId])
+  @@index([status])
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+}
+
+// ─── Market Hotspot System ───
+
+model Market {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  lat         Float
+  lng         Float
+  radius      Float    @default(500) // meters
+  startTime   String?  // "08:00"
+  endTime     String?  // "14:00"
+  activeDate  DateTime // the date this market is active
+  active      Boolean  @default(true)
+
+  checkIns    MarketCheckIn[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([lat, lng])
+  @@index([activeDate])
+  @@index([active])
+}
+
+model MarketCheckIn {
+  id        String   @id @default(cuid())
+  vendorId  String
+  marketId  String
+  checkedInAt DateTime @default(now())
+  checkedOutAt DateTime?
+
+  vendor    Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  market    Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorId, marketId])
+  @@index([vendorId])
+  @@index([marketId])
 }

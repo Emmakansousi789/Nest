@@ -1,18 +1,25 @@
 import { NextResponse } from "next/server";
+import { submitVendorSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, city, description } = body;
 
-    if (!name || !email || !city || !description) {
+    // Validate input with Zod
+    const parsed = submitVendorSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "All fields are required." },
+        {
+          error: "Validation failed",
+          details: parsed.error.flatten().fieldErrors,
+        },
         { status: 400 }
       );
     }
 
-    // MVP: log to console. In production, this would save to a database.
+    const { name, email, city, description } = parsed.data;
+
+    // MVP: log to console. In production, save to database.
     console.log("[Vendor Submission]", {
       name,
       email,

@@ -75,7 +75,7 @@ export default function PullToRefresh({ onRefresh, children, className = "" }: P
         )}
       </div>
       <div
-        className="transition-transform"
+        className="flex flex-col h-full transition-transform"
         style={{ transform: `translateY(${pullDistance}px)` }}
       >
         {children}

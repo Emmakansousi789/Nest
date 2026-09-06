@@ -1,117 +1,99 @@
+import { memo } from "react";
 import Link from "next/link";
 import { Vendor } from "@/types";
-import { categories } from "@/data/vendors";
-import { getAverageRating, getReviewCount } from "@/data/store";
+import { getAverageRating } from "@/data/store";
 import FavoriteButton from "./FavoriteButton";
+import ShareButton from "./ShareButton";
 import { isOpenNow } from "@/data/vendors";
+import Image from "next/image";
+
+// Real photos by category — sourced from Unsplash (royalty-free)
+const categoryPhotos: Record<string, string> = {
+  "farmers-market": "https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=600&h=600&fit=crop&q=80",
+  "food-producer": "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&h=600&fit=crop&q=80",
+  "maker": "https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=600&h=600&fit=crop&q=80",
+  "retail": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&h=600&fit=crop&q=80",
+  "services": "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=600&h=600&fit=crop&q=80",
+  "artisan": "https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=600&h=600&fit=crop&q=80",
+  "wellness": "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&h=600&fit=crop&q=80",
+};
 
 interface VendorCardProps {
   vendor: Vendor;
   distance?: number;
 }
 
-export default function VendorCard({ vendor, distance }: VendorCardProps) {
-  const category = categories.find((c) => c.value === vendor.category);
+function VendorCardInner({ vendor, distance }: VendorCardProps) {
   const avgRating = getAverageRating(vendor.id);
-  const reviewCount = getReviewCount(vendor.id);
   const open = isOpenNow(vendor);
+  const photoUrl = categoryPhotos[vendor.category] || categoryPhotos.services;
 
   return (
     <Link
       href={`/vendor/${vendor.id}`}
-      className="group block bg-cream border border-parchment rounded-2xl overflow-hidden card-interactive focus-ring"
+      className="group block card-interactive focus-ring rounded-2xl"
     >
-      {/* Image area — full-width, Airbnb style */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-ecru">
-        {/* Category illustration fills entire top */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-5xl opacity-40 group-hover:scale-110 group-hover:opacity-60 transition-all duration-300">
-            {category?.icon || "🏪"}
-          </span>
+      {/* Image area */}
+      <div className="relative aspect-square overflow-hidden rounded-2xl mb-3">
+        <Image
+          src={photoUrl}
+          alt={vendor.name}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="object-cover group-hover:scale-105 transition-transform duration-500"
+          priority={vendor.featured}
+        />
+
+        {/* Favorite button — top right */}
+        <div className="absolute top-3 right-3 z-10">
+          <FavoriteButton vendorId={vendor.id} />
         </div>
 
-        {/* Category pill — bottom-left over image */}
-        <div className="absolute bottom-3 left-3">
-          <span className="inline-block bg-charcoal/80 backdrop-blur-sm text-white text-[10px] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full">
-            {category?.label || vendor.category}
-          </span>
+        {/* Share button — top right next to favorite */}
+        <div className="absolute top-3 right-14 z-10">
+          <ShareButton vendor={vendor} />
         </div>
 
-        {/* Favorite — circular white button top-right with press feedback */}
-        <div className="absolute top-3 right-3">
-          <div className="w-9 h-9 bg-white/85 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm border border-white/50 hover:bg-white hover:shadow-md transition-all duration-200 pressable">
-            <FavoriteButton vendorId={vendor.id} />
-          </div>
-        </div>
-
-        {/* Badges — top-left */}
-        <div className="absolute top-3 left-3 flex items-center gap-1.5">
-          {vendor.featured && (
-            <span className="badge text-white bg-charcoal/80 backdrop-blur-sm border-0 rounded-full">
-              Curated
+        {/* Badge — top left */}
+        {vendor.featured && (
+          <div className="absolute top-3 left-3 z-10">
+            <span className="badge bg-white text-charcoal shadow-sm">
+              Guest favorite
             </span>
-          )}
-          <span
-            className={`badge border-0 rounded-full backdrop-blur-sm ${
-              open
-                ? "text-white bg-sage/85"
-                : "text-white bg-stone/70"
-            }`}
-          >
+          </div>
+        )}
+
+        {/* Open/Closed — bottom left */}
+        <div className="absolute bottom-3 left-3 z-10">
+          <span className={`badge ${open ? "bg-white text-sage" : "bg-white text-stone"}`}>
             {open ? "Open" : "Closed"}
           </span>
         </div>
       </div>
 
-      {/* Content — strict typographic hierarchy */}
-      <div className="p-3.5">
-        {/* Name — serif, semibold, largest */}
-        <h3 className="font-serif text-[15px] font-semibold text-charcoal leading-snug mb-0.5 group-hover:text-terracotta transition-colors duration-200">
-          {vendor.name}
-        </h3>
-
-        {/* Tagline — sans, regular weight, muted */}
-        <p className="text-xs text-stone leading-relaxed mb-2.5 line-clamp-2">
-          {vendor.tagline}
-        </p>
-
-        {/* Meta line — small, muted, dot-separated */}
-        <div className="flex items-center gap-1.5 text-[11px] text-clay">
+      {/* Content */}
+      <div className="px-0.5">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="text-[15px] font-semibold text-charcoal leading-snug truncate">
+            {vendor.name}
+          </h3>
           {avgRating > 0 && (
-            <>
-              <span className="text-charcoal font-semibold">{avgRating.toFixed(1)}</span>
-              <svg className="w-3 h-3 text-terracotta" fill="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-center gap-1 shrink-0">
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
               </svg>
-              <span>{reviewCount} review{reviewCount !== 1 ? "s" : ""}</span>
-              <span className="text-parchment">·</span>
-            </>
-          )}
-          <span>{vendor.city}</span>
-          {distance !== undefined && (
-            <>
-              <span className="text-parchment">·</span>
-              <span>{distance.toFixed(1)} mi</span>
-            </>
+              <span className="text-sm font-medium">{avgRating.toFixed(2)}</span>
+            </div>
           )}
         </div>
-
-        {/* Tags — small pills */}
-        {vendor.tags.length > 0 && (
-          <div className="mt-2.5 flex flex-wrap gap-1">
-            {vendor.tags.slice(0, 2).map((tag) => (
-              <span
-                key={tag}
-                className="text-[10px] font-medium text-graphite bg-ecru px-2 py-0.5 rounded-full"
-              >
-                {tag
-                  .replace(/-/g, " ")
-                  .replace(/\b\w/g, (l) => l.toUpperCase())}
-              </span>
-            ))}
-          </div>
+        <p className="text-sm text-stone mt-0.5">{vendor.city}</p>
+        {distance !== undefined && (
+          <p className="text-sm text-stone">{distance.toFixed(1)} miles away</p>
         )}
+        <p className="text-sm text-stone mt-0.5 line-clamp-1">{vendor.tagline}</p>
       </div>
     </Link>
   );
 }
+
+export default memo(VendorCardInner);

@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { vendors, categories, isOpenNow } from "@/data/vendors";
-import { getVendors, getReviewsForVendor, getAverageRating, getReviewCount } from "@/data/store";
+import { getVendorsAsync, getReviewsForVendorAsync, getAverageRatingAsync, getReviewCountAsync } from "@/data/store";
+import { prisma } from "@/lib/prisma";
 import StarRating from "@/components/StarRating";
 import FavoriteButton from "@/components/FavoriteButton";
 import DirectionsButton from "@/components/DirectionsButton";
@@ -8,22 +10,87 @@ import MessageButton from "@/components/MessageButton";
 import WriteReviewButton from "@/components/WriteReviewButton";
 import ReviewList from "@/components/ReviewList";
 import VendorProfileClient from "@/components/VendorProfileClient";
+import type { Market } from "@/types";
 
 export function generateStaticParams() {
   return vendors.map((v) => ({ id: v.id }));
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const vendor = vendors.find((v) => v.id === id);
+  if (!vendor) return { title: "Business Not Found" };
+  const category = categories.find((c) => c.value === vendor.category);
+  return {
+    title: `${vendor.name} | Local Discover`,
+    description: `${vendor.tagline} — ${category?.label || "Local business"} in ${vendor.city}, ${vendor.state}. ${vendor.story.slice(0, 120)}...`,
+    openGraph: {
+      title: vendor.name,
+      description: `${vendor.tagline} — ${category?.label || "Local business"} in ${vendor.city}, ${vendor.state}`,
+      type: "profile",
+      locale: "en_US",
+    },
+  };
+}
+
 export default async function VendorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const allVendors = getVendors();
+  const allVendors = await getVendorsAsync();
   const vendor = allVendors.find((v) => v.id === id);
   if (!vendor) notFound();
 
   const category = categories.find((c) => c.value === vendor.category);
-  const reviews = getReviewsForVendor(vendor.id);
-  const avgRating = getAverageRating(vendor.id);
-  const reviewCount = getReviewCount(vendor.id);
+  const rawReviews = await getReviewsForVendorAsync(vendor.id);
+  const reviews = rawReviews.map((r) => ({ ...r, response: r.response || undefined }));
+  const avgRating = await getAverageRatingAsync(vendor.id);
+  const reviewCount = await getReviewCountAsync(vendor.id);
   const open = isOpenNow(vendor);
+
+  // Merge seed photos with uploaded photos from DB
+  let allPhotos = vendor.photos;
+  let currentMarket: Market | null = null;
+  try {
+    const dbPhotos = await prisma.vendorPhoto.findMany({
+      where: { vendorId: id },
+      orderBy: { order: "asc" },
+    });
+    if (dbPhotos.length > 0) {
+      allPhotos = [
+        ...dbPhotos.map((p: { url: string; alt: string; caption: string | null }) => ({
+          url: p.url,
+          alt: p.alt,
+          caption: p.caption || undefined,
+        })),
+        ...vendor.photos,
+      ];
+    }
+    // Check if vendor is currently checked into a market
+    const dbVendor = await prisma.vendor.findUnique({
+      where: { id },
+      select: { currentMarketId: true },
+    });
+    if (dbVendor?.currentMarketId) {
+      const market = await prisma.market.findUnique({
+        where: { id: dbVendor.currentMarketId },
+      });
+      if (market) {
+        currentMarket = {
+          id: market.id,
+          name: market.name,
+          description: market.description || "",
+          lat: market.lat,
+          lng: market.lng,
+          radius: market.radius,
+          startTime: market.startTime || "",
+          endTime: market.endTime || "",
+          activeDate: market.activeDate.toISOString(),
+          active: market.active,
+        };
+      }
+    }
+  } catch {
+    // DB may not be connected — fall back to seed data
+  }
 
   return (
     <div className="min-h-screen bg-linen">
@@ -37,17 +104,18 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
             <span className="text-sm font-medium">Back</span>
           </a>
           <div className="flex items-center gap-2">
-            <FavoriteButton vendorId={vendor.id} size="md" />
+            <FavoriteButton vendorId={vendor.id} />
           </div>
         </div>
       </div>
 
       <VendorProfileClient
-        photos={vendor.photos}
+        photos={allPhotos}
         category={vendor.category}
         vendorName={vendor.name}
+        currentMarket={currentMarket}
       >
-      <article className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-28">
         {/* Hero */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-3">
@@ -91,7 +159,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
         {vendor.products.length > 0 && (
           <section className="mb-10">
             <h2 className="font-serif text-xl font-semibold text-charcoal mb-4">What We Offer</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-parchment/50">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-parchment/50">
               {vendor.products.map((product) => (
                 <div key={product.id} className="bg-cream p-4">
                   <div className="flex items-start justify-between mb-2">

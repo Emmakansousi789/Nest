@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialMode?: "signin" | "signup";
 }
 
-export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: AuthModalProps) {
   const { login, signup } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [role, setRole] = useState<"customer" | "business">("customer");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -19,6 +21,21 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [agreed, setAgreed] = useState(false);
+
+  // Reset mode when modal opens with a specific initial mode
+  useEffect(() => {
+    if (isOpen) {
+      setMode(initialMode);
+      setError("");
+      setFieldErrors({});
+      setEmail("");
+      setPassword("");
+      setName("");
+      setBusinessName("");
+      setAgreed(false);
+    }
+  }, [isOpen, initialMode]);
 
   if (!isOpen) return null;
 
@@ -29,6 +46,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Enter a valid email";
     if (!password) errors.password = "Password is required";
     else if (password.length < 6) errors.password = "At least 6 characters";
+    if (mode === "signup" && !agreed) errors.terms = "You must agree to the Terms of Use";
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -224,11 +242,54 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
               )}
             </div>
 
+            {/* Legal agreement (signup only) */}
+            {mode === "signup" && (
+              <div className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => { setAgreed(e.target.checked); setFieldErrors((p) => ({ ...p, terms: "" })); }}
+                  className="mt-0.5 rounded border-parchment text-terracotta focus:ring-terracotta"
+                />
+                <span className="text-xs text-stone leading-relaxed">
+                  I agree to the{' '}
+                  <Link href="/terms" target="_blank" className="text-terracotta hover:text-terracotta-dark underline">Terms of Use</Link>
+                  {' '}and{' '}
+                  <Link href="/privacy" target="_blank" className="text-terracotta hover:text-terracotta-dark underline">Privacy Policy</Link>
+                </span>
+              </div>
+            )}
+            {fieldErrors.terms && (
+              <p className="input-error-message">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                {fieldErrors.terms}
+              </p>
+            )}
+
+            {/* Demo login for App Review */}
+            {mode === "signin" && (
+              <button
+                type="button"
+                onClick={async () => {
+                  setLoading(true);
+                  setError("");
+                  await login("demo@localdiscover.com", "DemoPass123!");
+                  setLoading(false);
+                  onClose();
+                }}
+                className="w-full py-2.5 bg-ecru border border-parchment text-charcoal rounded-xl text-sm font-medium hover:bg-parchment transition-colors"
+              >
+                Try Demo Account
+              </button>
+            )}
+
             {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 btn-primary mt-6 justify-center"
+              className="w-full py-3 btn-primary mt-4 justify-center"
             >
               {loading ? (
                 <div className="spinner !w-5 !h-5 !border-2 !border-white/30 !border-t-white" />

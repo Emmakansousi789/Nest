@@ -9,6 +9,7 @@ interface MapViewProps {
   zoom?: number;
   radiusMiles?: number;
   centerLocation?: { lat: number; lng: number } | null;
+  markets?: { id: string; name: string; lat: number; lng: number; radius: number; checkInCount?: number }[];
 }
 
 export default function MapView({
@@ -17,6 +18,7 @@ export default function MapView({
   zoom = 12,
   radiusMiles,
   centerLocation,
+  markets = [],
 }: MapViewProps) {
   const [mounted, setMounted] = useState(false);
   const [MapComponent, setMapComponent] = useState<React.ComponentType<MapViewProps> | null>(null);
@@ -30,7 +32,7 @@ export default function MapView({
 
   if (!mounted || !MapComponent) {
     return (
-      <div className="w-full h-full rounded-2xl overflow-hidden bg-ecru flex items-center justify-center">
+      <div className="w-full h-full bg-ecru flex items-center justify-center">
         <div className="text-center">
           <svg className="w-8 h-8 mx-auto mb-2 text-stone" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75L3 9v11.25l6-2.25m0-11.25l6 2.25m-6-2.25v11.25m6-9L21 6v11.25l-6 2.25m0-11.25l-6 2.25m6 9V9" />
@@ -41,5 +43,9 @@ export default function MapView({
     );
   }
 
-  return <MapComponent vendors={vendors} center={center} zoom={zoom} radiusMiles={radiusMiles} centerLocation={centerLocation} />;
+  return (
+    <div className="w-full h-full">
+      <MapComponent vendors={vendors} center={center} zoom={zoom} radiusMiles={radiusMiles} centerLocation={centerLocation} markets={markets} />
+    </div>
+  );
 }

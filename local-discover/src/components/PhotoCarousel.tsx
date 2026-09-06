@@ -2,7 +2,6 @@
 
 import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
-import { LoadingSpinner } from "./icons";
 import CategoryIllustration, { getGradient } from "./CategoryIllustration";
 import { BusinessCategory } from "@/types";
 
