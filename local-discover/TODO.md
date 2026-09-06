@@ -49,6 +49,8 @@ These items cannot be completed from the codebase — they require manual action
 
 ## Known Issues
 
+- **Old photos column dropped** — During `npx prisma db push`, the legacy `photos` JSON column on the Vendor table was dropped (`--accept-data-loss`). It contained only placeholder URLs (e.g. `/placeholder-farm-1.jpg`), no real uploaded photos. The new `VendorPhoto` relation model replaced it. If any real vendor photos were uploaded before the schema migration, they are lost.
+- **Photo uploads don't persist** — `PhotoManager.tsx` and `/api/vendors/[id]/photos` exist but have no cloud storage backend wired up. Photos are saved as URLs to the database but the actual files are never stored. On Vercel, `public/uploads/` doesn't persist between deploys. Won't work until Supabase Storage bucket `vendor-photos` is created (see Before Launch).
 - **Dashboard analytics** — Seller dashboard stats (views, saves, clicks) are hardcoded placeholder values. Wire to real event tracking once analytics infrastructure is in place.
 - **Individual vendor photos** — Category photos are shared across all vendors in the same category. Add unique per-vendor photography to make each listing feel distinct.
 - **Geocoding cache** — In-memory geocoding cache resets per serverless instance. Move to Redis-backed cache for persistent caching across cold starts.

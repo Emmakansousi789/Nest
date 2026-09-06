@@ -50,13 +50,29 @@ export const loginSchema = z.object({
 
 export const submitVendorSchema = z.object({
   name: sanitizeString(200),
+  tagline: sanitizeString(500).default(""),
+  story: sanitizeString(5000).default(""),
+  category: z.enum(["farmers-market", "food-producer", "maker", "retail", "services", "artisan", "wellness"]).default("services"),
+  tags: z.array(z.string().max(50)).max(20).default([]),
+  address: sanitizeString(300).default(""),
+  city: sanitizeString(100),
+  state: sanitizeString(50).default(""),
+  zip: sanitizeString(20).default(""),
+  lat: z.number().default(0),
+  lng: z.number().default(0),
+  phone: sanitizeString(30).default(""),
   email: z
     .string()
     .min(1, "Email is required")
     .email("Invalid email")
     .transform((s) => s.toLowerCase().trim()),
-  city: sanitizeString(100),
-  description: sanitizeString(2000),
+  website: z.string().url("Invalid URL").max(500).optional().nullable(),
+  instagram: sanitizeString(100).optional().nullable(),
+  hours: z.record(z.string(), z.object({
+    open: z.string(),
+    close: z.string(),
+    closed: z.boolean().optional(),
+  })).optional().default({}),
 });
 
 // ─── Reviews ───

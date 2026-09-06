@@ -6,6 +6,7 @@ import { useVendors } from "@/hooks/useVendors";
 import StarRating from "./StarRating";
 import BusinessListingEditor from "./BusinessListingEditor";
 import MarketCreationForm from "./MarketCreationForm";
+import VendorOnboarding from "./VendorOnboarding";
 import { ChatBubbleOutline, StarOutline, StorefrontOutline } from "./icons";
 import type { Vendor } from "@/types";
 import type { Review } from "@/data/reviews";
@@ -22,7 +23,7 @@ export default function SellerDashboard({ activeSellerTab, onSellerTabChange }: 
   const { user, logout } = useAuth();
   const [internalTab, setInternalTab] = useState<BizTab>("dashboard");
   const activeTab = activeSellerTab ?? internalTab;
-  const { vendors: allVendors } = useVendors();
+  const { vendors: allVendors, refresh: refreshVendors } = useVendors();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -92,6 +93,13 @@ export default function SellerDashboard({ activeSellerTab, onSellerTabChange }: 
           Sign in with a business account to access the seller dashboard.
         </p>
       </div>
+    );
+  }
+
+  // Business user with no vendor listing — show onboarding
+  if (user.role === "business" && !vendor) {
+    return (
+      <VendorOnboarding onComplete={refreshVendors} />
     );
   }
 
