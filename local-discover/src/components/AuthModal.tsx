@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppleSignIn, SignInScope } from "@capawesome/capacitor-apple-sign-in";
 import { Capacitor } from "@capacitor/core";
@@ -15,7 +14,6 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: AuthModalProps) {
   const { login, signup } = useAuth();
-  const router = useRouter();
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
   const [role, setRole] = useState<"customer" | "business">("customer");
   const [name, setName] = useState("");
@@ -147,12 +145,11 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: A
                         scopes: [SignInScope.Email, SignInScope.FullName],
                       });
                       // On native, send the identity token to our auth endpoint
-                      const res = await fetch("/api/auth/callback/credential", {
+                      const res = await fetch("/api/auth/native-apple", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                           token: result.idToken,
-                          provider: "apple",
                         }),
                       });
                       if (res.ok) {
@@ -166,8 +163,10 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: A
                       }
                       setError("Apple Sign In failed. Please try again.");
                     } else {
-                      // Web: redirect to NextAuth Apple provider
-                      router.push("/api/auth/signin/apple");
+                      // Web: Apple Sign In is not configured yet — show helpful message
+                      setError("Apple Sign In is not available on web yet. Please use email/password or the demo account.");
+                      setLoading(false);
+                      return;
                     }
                   } catch (err) {
                     if ((err as Error)?.message?.includes("cancelled")) {

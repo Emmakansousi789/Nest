@@ -6,9 +6,15 @@ const config: CapacitorConfig = {
   webDir: "out",
   server: {
     androidScheme: "https",
-    // Allow loading from local server during development
-    url: process.env.CAPACITOR_DEV_URL || undefined,
-    cleartext: true,
+    // The native app loads the hosted web UI from Vercel.
+    // This gives us real API routes, auth, reviews, messages — everything.
+    // Capacitor plugins (Apple Sign In, SplashScreen, etc.) still work via the JS bridge.
+    // Set CAPACITOR_API_URL to your Vercel deployment URL in .env.local:
+    //   CAPACITOR_API_URL=https://your-app.vercel.app
+    url: process.env.CAPACITOR_API_URL || undefined,
+    cleartext: !process.env.CAPACITOR_API_URL, // cleartext only for local dev
+    // Allow navigation within the hosted app
+    allowNavigation: ["*"],
   },
   plugins: {
     SplashScreen: {

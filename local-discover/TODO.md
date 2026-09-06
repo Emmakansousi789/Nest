@@ -10,6 +10,8 @@ Outstanding work, known limitations, and pre-launch checklist items. All content
 - [ ] **Configure demo credentials** — Set `DEMO_EMAIL` and `DEMO_PASSWORD` in `.env.local` (served via `/api/auth/demo` endpoint)
 - [ ] **Generate NEXTAUTH_SECRET** — `openssl rand -base64 32`
 - [ ] **Set NEXTAUTH_URL** — Your production domain (e.g., `https://localdiscover.app`)
+- [ ] **Deploy to Vercel** — Import the `Nest` repo at vercel.com/new, set env vars (DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL), and get the deployment URL. The Capacitor native app needs a live backend to work.
+- [ ] **Set CAPACITOR_API_URL** — After Vercel deploy, add `CAPACITOR_API_URL=https://your-vercel-app.vercel.app` to `.env.local` and re-run `npm run cap:sync` to point the native app at the live server
 
 ## Before Launch
 
@@ -57,6 +59,8 @@ These items cannot be completed from the codebase — they require manual action
 - **`/for-vendors` page is a dead end** — The `/for-vendors/page.tsx` form still calls `alert()` on submit. It should redirect to the seller dashboard onboarding flow (VendorOnboarding component) or be removed entirely since the dashboard now handles vendor creation.
 - **Dev server instability on macOS** — The Next.js dev server (via launchd) repeatedly dies during development sessions. Unable to browser-test UI flows — all verification was done at the Prisma/CLI level. Investigate whether this is a port conflict, memory issue, or launchd config problem.
 - **Geocoding cache** — In-memory geocoding cache resets per serverless instance. Move to Redis-backed cache for persistent caching across cold starts.
+- **Apple Sign In JWT not verified** — `/api/auth/native-apple` decodes the idToken but doesn't verify the JWT signature against Apple's public keys (https://appleid.apple.com/auth/keys). A malicious user could forge tokens. Add signature verification before production launch.
+- **Apple Sign In web path disabled** — The web "Sign in with Apple" button shows a "not available" message because no Apple provider is configured in NextAuth. Requires Apple Developer credentials (Team ID, Service ID, Key ID, private key) to enable.
 - **Mobile app shell** — PWA manifest and service worker exist but lack an install prompt, splash screen, and app-like chrome. Add for native-feeling install experience.
 
 ## Post-Testing Pre-Launch Reminders
