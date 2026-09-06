@@ -53,6 +53,9 @@ These items cannot be completed from the codebase — they require manual action
 - **Photo uploads don't persist** — `PhotoManager.tsx` and `/api/vendors/[id]/photos` exist but have no cloud storage backend wired up. Photos are saved as URLs to the database but the actual files are never stored. On Vercel, `public/uploads/` doesn't persist between deploys. Won't work until Supabase Storage bucket `vendor-photos` is created (see Before Launch).
 - **Dashboard analytics** — Seller dashboard stats (views, saves, clicks) are hardcoded placeholder values. Wire to real event tracking once analytics infrastructure is in place.
 - **Individual vendor photos** — Category photos are shared across all vendors in the same category. Add unique per-vendor photography to make each listing feel distinct.
+- **`/for-vendors` page is a dead end** — The `/for-vendors/page.tsx` form still calls `alert()` on submit. It should redirect to the seller dashboard onboarding flow (VendorOnboarding component) or be removed entirely since the dashboard now handles vendor creation.
+- **Seed script may corrupt ownerId** — The seed uses `upsert` with a spread (`...vendor`). If `ownerId` is present in seed data or added later, re-seeding will re-link all vendors to one user. Add `ownerId: undefined` explicitly in the seed to prevent accidental overwrites.
+- **Dev server instability on macOS** — The Next.js dev server (via launchd) repeatedly dies during development sessions. Unable to browser-test UI flows — all verification was done at the Prisma/CLI level. Investigate whether this is a port conflict, memory issue, or launchd config problem.
 - **Geocoding cache** — In-memory geocoding cache resets per serverless instance. Move to Redis-backed cache for persistent caching across cold starts.
 - **Mobile app shell** — PWA manifest and service worker exist but lack an install prompt, splash screen, and app-like chrome. Add for native-feeling install experience.
 
@@ -65,3 +68,4 @@ These items cannot be completed from the codebase — they require manual action
 - [ ] **Admin panel** — Build a moderation dashboard for reviewing reports, managing vendor listings, and approving content
 - [ ] **A/B testing** — Add experiment infrastructure when traffic is sufficient to measure statistical significance
 - [ ] **Email notifications** — Send email digests for reviews, messages, and account events
+- [ ] **Vendor onboarding browser test** — The VendorOnboarding flow was verified at the API/database level but never browser-tested. Verify the 3-step form renders, validates, submits, and transitions to the dashboard correctly.
