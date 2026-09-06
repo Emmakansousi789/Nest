@@ -16,8 +16,6 @@ export default function DirectionsButton({
   city,
   state,
   zip,
-  lat: _lat,
-  lng: _lng,
 }: DirectionsButtonProps) {
   const [open, setOpen] = useState(false);
   const fullAddress = `${address}, ${city}, ${state} ${zip}`;

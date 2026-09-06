@@ -564,7 +564,9 @@ export function isOpenNow(vendor: Vendor): boolean {
 
   const parseTime = (t: string): number => {
     const [time, period] = t.split(" ");
-    let [h, m] = time.split(":").map(Number);
+    const parts = time.split(":").map(Number);
+    const m = parts[1];
+    let h = parts[0];
     if (period === "PM" && h !== 12) h += 12;
     if (period === "AM" && h === 12) h = 0;
     return h * 60 + m;

@@ -193,7 +193,6 @@ export default function ProfileTab() {
   const [mounted, setMounted] = useState(false);
   const [savedIds, setSavedIds] = useState<string[]>([]);
   const [view, setView] = useState<ProfileView>("main");
-  const [_deleting, setDeleting] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signin");
 
@@ -521,7 +520,6 @@ export default function ProfileTab() {
           <div className="mt-12">
             <button
               onClick={async () => {
-                setDeleting(true);
                 try {
                   await fetch("/api/auth/account", { method: "DELETE" });
                   logout();

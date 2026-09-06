@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 
 /**
  * Polls a fetcher function at a fixed interval while the tab is visible.
@@ -12,7 +12,7 @@ export function usePolling<T>(
   intervalMs: number = 15000,
   enabled: boolean = true
 ): { refresh: () => Promise<void>; data: T | null } {
-  const dataRef = useRef<T | null>(null);
+  const [data, setData] = useState<T | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mountedRef = useRef(true);
 
@@ -21,7 +21,7 @@ export function usePolling<T>(
     try {
       const result = await fetcher();
       if (mountedRef.current) {
-        dataRef.current = result;
+        setData(result);
       }
     } catch {
       // Silently fail — next poll will retry
@@ -74,5 +74,5 @@ export function usePolling<T>(
     };
   }, [fetchData, intervalMs, enabled]);
 
-  return { refresh, data: dataRef.current };
+  return { refresh, data };
 }

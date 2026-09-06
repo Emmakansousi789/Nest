@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import type { Metadata } from "next";
 import { vendors, categories, isOpenNow } from "@/data/vendors";
 import { getVendorsAsync, getReviewsForVendorAsync, getAverageRatingAsync, getReviewCountAsync } from "@/data/store";
@@ -97,12 +98,12 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
       {/* Header bar */}
       <div className="sticky top-0 z-40 bg-linen/90 backdrop-blur-sm border-b border-parchment">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2 text-stone hover:text-charcoal transition-colors">
+          <Link href="/" className="flex items-center gap-2 text-stone hover:text-charcoal transition-colors">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
             <span className="text-sm font-medium">Back</span>
-          </a>
+          </Link>
           <div className="flex items-center gap-2">
             <FavoriteButton vendorId={vendor.id} />
           </div>

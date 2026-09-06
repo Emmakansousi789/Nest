@@ -13,13 +13,17 @@ export default function FavoriteButton({ vendorId }: FavoriteButtonProps) {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     try {
       const favorites = JSON.parse(localStorage.getItem("ld-favorites") || "[]");
       setIsFav(favorites.includes(vendorId));
     } catch {
       setIsFav(false);
     }
-  }, [vendorId]);
+  }, [vendorId, mounted]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();

@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import VendorCard from "@/components/VendorCard";
 import SkeletonCard from "@/components/SkeletonCard";
 import FilterSheet from "@/components/FilterSheet";
@@ -51,10 +52,6 @@ function DiscoverPage() {
   const [sellerTab, setSellerTab] = useState<SellerTab>("dashboard");
 
   const isInitialMount = useRef(true);
-  const routerRef = useRef(router);
-  routerRef.current = router;
-  const pathnameRef = useRef(pathname);
-  pathnameRef.current = pathname;
 
   useEffect(() => {
     if (isInitialMount.current) { isInitialMount.current = false; return; }
@@ -69,8 +66,8 @@ function DiscoverPage() {
     }
     if (radius !== 25) params.set("r", String(radius));
     const qs = params.toString();
-    routerRef.current.replace(qs ? `${pathnameRef.current}?${qs}` : pathnameRef.current, { scroll: false });
-  }, [searchQuery, activeCategory, activeTags, selectedLocation, radius]);
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [searchQuery, activeCategory, activeTags, selectedLocation, radius, router, pathname]);
 
   const filteredVendors = useMemo(() => {
     let results = [...getVendors()];
@@ -83,7 +80,7 @@ function DiscoverPage() {
     results = filterVendors(results, activeCategory, activeTags, searchQuery);
     results.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
     return results;
-  }, [selectedLocation, radius, activeCategory, activeTags, searchQuery, sortMode]);
+  }, [selectedLocation, radius, activeCategory, activeTags, searchQuery]);
 
 
 
@@ -291,7 +288,7 @@ function DiscoverPage() {
 
             {/* Markets & Events link */}
             <section className="mt-5 px-4 sm:px-6">
-              <a
+              <Link
                 href="/markets"
                 className="flex items-center justify-between p-4 bg-terracotta/5 border border-terracotta/10 rounded-2xl hover:bg-terracotta/10 transition-colors"
               >
@@ -309,7 +306,7 @@ function DiscoverPage() {
                 <svg className="w-4 h-4 text-clay" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                 </svg>
-              </a>
+              </Link>
             </section>
 
             {/* All businesses — grid */}
