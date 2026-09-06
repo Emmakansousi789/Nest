@@ -315,37 +315,6 @@ src/
 - **Content Moderation** — Profanity/harassment filtering on reviews and messages via `moderation.ts`. Contact info blocked in reviews.
 - **User Blocking** — Block/unblock users via encrypted storage. Blocked users' content is hidden.
 - **Production Safety** — No debug features in codebase; Prisma errors logged without leaking connection strings
-- **Account Lockout** — Not yet implemented; revisit when auth is fully enabled for production
-
-## Deployment
-
-### Pre-Launch Checklist
-
-Before deploying to production, complete these steps:
-
-1. **Create Supabase Storage bucket** — In the Supabase dashboard, create a storage bucket named `vendor-photos` (public read access). Set the env vars listed above.
-2. **Create Upstash Redis instance** — Free tier at [upstash.com](https://upstash.com). Set the env vars listed above.
-3. **Seed the database** — Run `npm run seed` against your production PostgreSQL to populate the 12 demo vendors and 25 reviews.
-4. **Configure demo credentials** — Set `DEMO_EMAIL` and `DEMO_PASSWORD` in `.env.local` (served via `/api/auth/demo` endpoint).
-5. **Generate NEXTAUTH_SECRET** — `openssl rand -base64 32`
-6. **Set NEXTAUTH_URL** — Your production domain (e.g., `https://localdiscover.app`)
-
-### Post-Deployment Verification
-
-- [ ] Vendor cards show real category photos (not emoji placeholders)
-- [ ] Photo upload succeeds and persists after page reload
-- [ ] Rate limiting returns 429 after exceeding limits
-- [ ] Sign up → login → session persists → logout cycle works end-to-end
-- [ ] Market creation form creates a market that appears on the map
-- [ ] Share button copies link or opens native share sheet
-- [ ] PWA installs on mobile (add to home screen)
-- [ ] Offline page loads when network is disconnected
-
-## Supabase Configuration (Outside App Code)
-
-- **Row-Level Security (RLS)** — Configure in Supabase dashboard. Not in app code since Prisma connects directly to PostgreSQL, bypassing Supabase GoTrue `auth.uid()`. Application-level authorization is enforced in API routes instead.
-- **Account Lockout** — Not yet implemented in app code. When auth is fully enabled for production, add lockout after N failed attempts.
-- **Photo Storage** — Supabase Storage integration is implemented (`src/lib/storage.ts`). Create a `vendor-photos` bucket in the Supabase dashboard. Falls back to local `public/uploads/` if not configured.
 
 ## Apple App Store & Google Play Compliance
 
@@ -367,18 +336,6 @@ Before deploying to production, complete these steps:
 - ✅ Encrypted storage for user-linked data (Keychain / EncryptedSharedPreferences)
 - ✅ Consent screen before any data collection
 
-### Still Required in App Store Connect / Play Console (Not Code)
-
-These items cannot be completed from the codebase — they require manual action in the store dashboards:
-
-1. **DSA Trader Status** — Declare trader/developer identity in App Store Connect for EU distribution (required since Feb 2025)
-2. **Privacy Nutrition Labels** — Fill out App Privacy section in App Store Connect: Data Linked to User (name, email, location), Usage Data (analytics), Contact Info
-3. **App Store Review Notes** — Document: demo account flow (via `/api/auth/demo`), app purpose (local business directory), no IAP, geocoding via Nominatim, shopper/seller persona toggle
-4. **Data Safety Form** — Complete Google Play Data Safety declaration matching runtime data collection
-5. **Account Deletion URL** — Declare `/delete-account` in Play Console Data Safety settings
-6. **Age Rating** — Complete IARC content rating questionnaire in both stores
-7. **App Icon** — Replace placeholder icon with proper 1024×1024 (iOS) / 512×512 (Android) app icon
-
 ## Available Scripts
 
 | Command | Description |
@@ -393,23 +350,6 @@ These items cannot be completed from the codebase — they require manual action
 | `npm run cap:sync` | Sync web assets to iOS + Android projects |
 | `npm run cap:ios` | Open iOS project in Xcode |
 | `npm run cap:android` | Open Android project in Android Studio |
-
-## Post-Testing Pre-Launch Reminders
-
-The following items should be completed after testing but before public launch:
-
-- [ ] **i18n (Internationalization)** — Add multi-language support when targeting non-English markets
-- [ ] **Geocoding rate limit** — Currently uses Nominatim (free, 1 req/sec). Route through server API with caching or switch to paid geocoder (Mapbox/Google Places) when traffic grows
-- [ ] **Error monitoring** — Add Sentry or similar for structured error tracking once real users generate errors
-- [ ] **SEO** — Add `sitemap.xml`, `robots.txt`, and structured data (JSON-LD) once organic traffic is being targeted
-- [ ] **Admin panel** — Build a moderation dashboard for reviewing reports, managing vendor listings, and approving content
-- [ ] **A/B testing** — Add experiment infrastructure when traffic is sufficient to measure statistical significance
-- [ ] **Email notifications** — Send email digests for reviews, messages, and account events
-- [ ] **Geocoding client-side rate limit** — Server-side proxy handles Nominatim limits; add client-side debounce for heavy search usage
-- [ ] **Individual vendor photos** — Category photos are shared across all vendors in the same category. Add unique per-vendor photography to make each listing feel distinct
-- [ ] **Dashboard analytics** — Seller dashboard stats (views, saves, clicks) are hardcoded. Wire to real event tracking once analytics infrastructure is in place
-- [ ] **Geocoding cache** — In-memory geocoding cache resets per serverless instance. Move to Redis-backed cache for persistent caching across cold starts
-- [ ] **Mobile app shell** — PWA manifest and service worker exist but lack an install prompt, splash screen, and app-like chrome. Add for native-feeling install experience
 
 ## License
 
