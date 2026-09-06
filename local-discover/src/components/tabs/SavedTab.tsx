@@ -12,8 +12,8 @@ export default function SavedTab() {
 
   useEffect(() => {
     setMounted(true);
-    setFavoriteIds(getFavorites());
-    const handleChange = () => setFavoriteIds(getFavorites());
+    getFavorites().then(setFavoriteIds);
+    const handleChange = () => getFavorites().then(setFavoriteIds);
     window.addEventListener("favorites-changed", handleChange);
     return () => window.removeEventListener("favorites-changed", handleChange);
   }, []);
@@ -22,7 +22,7 @@ export default function SavedTab() {
 
   const handleRefresh = useCallback(() => {
     return new Promise<void>((resolve) => {
-      setFavoriteIds(getFavorites());
+      getFavorites().then(setFavoriteIds);
       setTimeout(resolve, 500);
     });
   }, []);

@@ -201,26 +201,27 @@ export default function ProfileTab() {
   const [editEmail, setEditEmail] = useState("");
   const [nameSaved, setNameSaved] = useState(false);
 
-  // Privacy toggles — persisted to localStorage
+  // Privacy toggles — persisted to encrypted storage
   type PrivacyState = { readReceipts: boolean; listingInSearch: boolean; showCity: boolean; showTripType: boolean; showLength: boolean; showServices: boolean };
   const defaultPrivacy: PrivacyState = { readReceipts: true, listingInSearch: true, showCity: true, showTripType: true, showLength: true, showServices: true };
-  const [privacy, setPrivacy] = useState<PrivacyState>(() => {
-    if (typeof window === "undefined") return {
-      readReceipts: true, listingInSearch: true, showCity: true,
-      showTripType: true, showLength: true, showServices: true,
-    };
-    try {
-      const saved = localStorage.getItem("ld-privacy");
-      if (saved) return JSON.parse(saved) as PrivacyState;
-    } catch { /* ignore */ }
-    return defaultPrivacy;
-  });
+  const [privacy, setPrivacy] = useState<PrivacyState>(defaultPrivacy);
 
-  // Persist privacy to localStorage on change
+  // Load privacy from encrypted storage on mount
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("ld-privacy", JSON.stringify(privacy));
-    }
+    import("@/lib/secure-storage").then(({ secureGet }) => {
+      secureGet("ld-privacy").then((saved) => {
+        if (saved) {
+          try { setPrivacy(JSON.parse(saved) as PrivacyState); } catch { /* ignore */ }
+        }
+      });
+    });
+  }, []);
+
+  // Persist privacy to encrypted storage on change
+  useEffect(() => {
+    import("@/lib/secure-storage").then(({ secureSet }) => {
+      secureSet("ld-privacy", JSON.stringify(privacy));
+    });
   }, [privacy]);
 
   // Deletion state

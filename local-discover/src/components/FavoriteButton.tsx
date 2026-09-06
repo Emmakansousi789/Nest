@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { secureGet, secureSet } from "@/lib/secure-storage";
+
+const FAVORITES_KEY = "ld-favorites";
 
 interface FavoriteButtonProps {
   vendorId: string;
@@ -17,26 +20,30 @@ export default function FavoriteButton({ vendorId }: FavoriteButtonProps) {
 
   useEffect(() => {
     if (!mounted) return;
-    try {
-      const favorites = JSON.parse(localStorage.getItem("ld-favorites") || "[]");
-      setIsFav(favorites.includes(vendorId));
-    } catch {
-      setIsFav(false);
-    }
+    // Load favorites from encrypted storage
+    secureGet(FAVORITES_KEY).then((stored) => {
+      try {
+        const favorites: string[] = stored ? JSON.parse(stored) : [];
+        setIsFav(favorites.includes(vendorId));
+      } catch {
+        setIsFav(false);
+      }
+    });
   }, [vendorId, mounted]);
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setAnimating(true);
     const next = !isFav;
     setIsFav(next);
     try {
-      const favorites = JSON.parse(localStorage.getItem("ld-favorites") || "[]");
+      const stored = await secureGet(FAVORITES_KEY);
+      const favorites: string[] = stored ? JSON.parse(stored) : [];
       const updated = next
         ? [...favorites, vendorId]
         : favorites.filter((id: string) => id !== vendorId);
-      localStorage.setItem("ld-favorites", JSON.stringify(updated));
+      await secureSet(FAVORITES_KEY, JSON.stringify(updated));
       window.dispatchEvent(new Event("favorites-changed"));
     } catch { /* ignore */ }
     setTimeout(() => setAnimating(false), 300);

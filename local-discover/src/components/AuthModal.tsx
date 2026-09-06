@@ -343,9 +343,21 @@ export default function AuthModal({ isOpen, onClose, initialMode = "signin" }: A
                 onClick={async () => {
                   setLoading(true);
                   setError("");
-                  await login("demo@localdiscover.com", "DemoPass123!");
-                  setLoading(false);
-                  onClose();
+                  try {
+                    // Fetch ephemeral demo credentials from server — never hardcoded in client
+                    const res = await fetch("/api/auth/demo", { method: "POST" });
+                    const creds = await res.json();
+                    if (creds?.email && creds?.password) {
+                      await login(creds.email, creds.password);
+                      onClose();
+                    } else {
+                      setError("Demo account unavailable. Please create an account.");
+                    }
+                  } catch {
+                    setError("Demo account unavailable. Please create an account.");
+                  } finally {
+                    setLoading(false);
+                  }
                 }}
                 className="w-full py-2.5 bg-ecru border border-parchment text-charcoal rounded-xl text-sm font-medium hover:bg-parchment transition-colors"
               >

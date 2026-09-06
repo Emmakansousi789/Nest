@@ -20,6 +20,7 @@
     "cap:run:android": "npx cap run android"
   },
   "dependencies": {
+    "@aparajita/capacitor-secure-storage": "^8.0.0",
     "@auth/prisma-adapter": "^2.11.3",
     "@capacitor/android": "^8.5.1",
     "@capacitor/cli": "^8.5.1",

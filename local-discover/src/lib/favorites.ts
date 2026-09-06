@@ -1,20 +1,22 @@
+import { secureGet, secureSet } from "@/lib/secure-storage";
+
 const STORAGE_KEY = "ld-favorites";
 
-export function getFavorites(): string[] {
-  if (typeof window === "undefined") return [];
+export async function getFavorites(): Promise<string[]> {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    const stored = await secureGet(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
   }
 }
 
-export function toggleFavorite(id: string): string[] {
-  const current = getFavorites();
+export async function toggleFavorite(id: string): Promise<string[]> {
+  const current = await getFavorites();
   const next = current.includes(id)
     ? current.filter((i) => i !== id)
     : [...current, id];
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  await secureSet(STORAGE_KEY, JSON.stringify(next));
   // Force re-render by dispatching a storage event
   window.dispatchEvent(new Event("storage"));
   return next;

@@ -12,9 +12,9 @@ export default function SavedPage() {
 
   useEffect(() => {
     setMounted(true);
-    setFavoriteIds(getFavorites());
+    getFavorites().then(setFavoriteIds);
 
-    const handleChange = () => setFavoriteIds(getFavorites());
+    const handleChange = () => getFavorites().then(setFavoriteIds);
     window.addEventListener("favorites-changed", handleChange);
     return () => window.removeEventListener("favorites-changed", handleChange);
   }, []);
