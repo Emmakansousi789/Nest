@@ -18,6 +18,7 @@ Outstanding work, known limitations, and pre-launch checklist items. All content
 1. **Create Supabase Storage bucket** — In the Supabase dashboard, create a storage bucket named `vendor-photos` (public read access). Set the env vars listed in README.md.
 2. **Create Upstash Redis instance** — Free tier at [upstash.com](https://upstash.com). Set the env vars listed in README.md.
 3. **Account Lockout** — Not yet implemented in app code. When auth is fully enabled for production, add lockout after N failed login attempts.
+4. **Contact form backend** — `/api/contact` currently logs submissions to console. Wire to an email service (Resend, SendGrid) or database table before launch.
 
 ### Post-Deployment Verification
 

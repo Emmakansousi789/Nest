@@ -18,6 +18,7 @@ type ProfileView =
   | "notifications"
   | "login-security"
   | "help"
+  | "contact-form"
   | "account-deletion";
 
 // ─── Toggle switch ───
@@ -225,6 +226,15 @@ export default function ProfileTab() {
     });
   }, [privacy]);
 
+  // Contact form state
+  const [contactName, setContactName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactSubject, setContactSubject] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
+  const [contactSending, setContactSending] = useState(false);
+  const [contactSent, setContactSent] = useState(false);
+  const [contactError, setContactError] = useState("");
+
   // Deletion state
   const [deleteRegion, setDeleteRegion] = useState("");
   const [deleteReason, setDeleteReason] = useState("");
@@ -249,6 +259,10 @@ export default function ProfileTab() {
     if (view === "personal-info" && user) {
       setEditName(user.name);
       setEditEmail(user.email);
+    }
+    if (view === "contact-form" && user) {
+      setContactName((prev) => prev || user.name);
+      setContactEmail((prev) => prev || user.email);
     }
   }, [view, user]);
 
@@ -387,7 +401,7 @@ export default function ProfileTab() {
 
             <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden divide-y divide-gray-100">
               <button
-                onClick={() => { window.open("mailto:hello@localdiscover.com", "_self"); }}
+                onClick={() => handleViewChange("contact-form")}
                 className="w-full flex items-center gap-3.5 py-4 px-4 text-left hover:bg-ecru/50 transition-colors"
               >
                 <div className="w-8 h-8 rounded-lg bg-ecru flex items-center justify-center shrink-0">
@@ -397,7 +411,7 @@ export default function ProfileTab() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-charcoal">Contact support</p>
-                  <p className="text-xs text-stone">hello@localdiscover.com</p>
+                  <p className="text-xs text-stone">Send us a message</p>
                 </div>
                 <svg className="w-4 h-4 text-clay" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -443,6 +457,135 @@ export default function ProfileTab() {
               <p className="text-xs text-stone">Local Discover v1.0</p>
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Contact Form (in-app) ───
+  if (view === "contact-form") {
+    return (
+      <div className="min-h-screen bg-white">
+        <BackHeader title="Contact support" onBack={() => handleViewChange("help")} />
+        <div className="px-5 py-5 pb-28">
+          {contactSent ? (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 mx-auto rounded-full bg-green-50 flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-charcoal mb-2">Message sent!</h3>
+              <p className="text-sm text-stone max-w-sm mx-auto mb-6">
+                Thanks for reaching out. We&apos;ll get back to you at <span className="font-medium text-charcoal">{contactEmail}</span> within 24 hours.
+              </p>
+              <button
+                onClick={() => handleViewChange("help")}
+                className="px-6 py-2.5 bg-charcoal text-white rounded-xl text-sm font-medium hover:bg-graphite transition-colors"
+              >
+                Back to Help
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              <p className="text-sm text-stone leading-relaxed">
+                Tell us what&apos;s going on and we&apos;ll get back to you as soon as possible.
+              </p>
+
+              {contactError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                  <p className="text-sm text-red-600">{contactError}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-stone mb-1.5 block">Name</label>
+                  <input
+                    type="text"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-charcoal focus:border-charcoal focus:ring-1 focus:ring-charcoal outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wider text-stone mb-1.5 block">Email</label>
+                  <input
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-charcoal focus:border-charcoal focus:ring-1 focus:ring-charcoal outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wider text-stone mb-1.5 block">Subject</label>
+                <input
+                  type="text"
+                  value={contactSubject}
+                  onChange={(e) => setContactSubject(e.target.value)}
+                  placeholder="What can we help with?"
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-charcoal placeholder:text-clay focus:border-charcoal focus:ring-1 focus:ring-charcoal outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wider text-stone mb-1.5 block">Message</label>
+                <textarea
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
+                  placeholder="Describe your issue or question..."
+                  rows={6}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm text-charcoal placeholder:text-clay focus:border-charcoal focus:ring-1 focus:ring-charcoal outline-none resize-none"
+                />
+              </div>
+
+              <button
+                onClick={async () => {
+                  if (!contactName.trim() || !contactEmail.trim() || !contactSubject.trim() || contactMessage.trim().length < 10) {
+                    setContactError("Please fill in all fields and write at least 10 characters.");
+                    return;
+                  }
+                  setContactSending(true);
+                  setContactError("");
+                  try {
+                    const res = await fetch("/api/contact", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        name: contactName.trim(),
+                        email: contactEmail.trim(),
+                        subject: contactSubject.trim(),
+                        message: contactMessage.trim(),
+                      }),
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                      setContactSent(true);
+                    } else {
+                      setContactError(data.error || "Something went wrong. Please try again.");
+                    }
+                  } catch {
+                    setContactError("Network error. Check your connection and try again.");
+                  } finally {
+                    setContactSending(false);
+                  }
+                }}
+                disabled={contactSending}
+                className="w-full py-3.5 bg-charcoal text-white rounded-xl text-sm font-semibold hover:bg-graphite transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {contactSending ? "Sending..." : "Send message"}
+              </button>
+
+              <div className="text-center pt-2">
+                <p className="text-xs text-stone">
+                  Or email us directly at{' '}
+                  <a href="mailto:hello@localdiscover.com" className="text-charcoal font-medium underline">hello@localdiscover.com</a>
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
